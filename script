@@ -5,24 +5,24 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 
--- Game Check
+
 local GameName = "Arsenal"
-if game.PlaceId ~= 286090429 then -- Arsenal's PlaceId
+if game.PlaceId ~= 286090429 then 
     return
 end
 
--- Cleanup Existing Script
+
 if _G.AimBotScript then
-    _G.AimBotScript:Destroy() -- Destroy existing script instance
+    _G.AimBotScript:Destroy() 
 end
 
--- Load Rayfield UI Library
+
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 if not Rayfield then
     return
 end
 
--- Create Rayfield UI Window
+
 local Window = Rayfield:CreateWindow({
     Name = "Simple Arsenal Script",
     LoadingTitle = "Loading Arsenal Script...",
@@ -34,12 +34,12 @@ local Window = Rayfield:CreateWindow({
     },
     Discord = {
         Enabled = false,
-        Invite = "noinvitelink", -- Update this if you have a Discord invite link
+        Invite = "noinvitelink", 
         RememberJoins = true
     }
 })
 
--- Variables
+
 local Enabled = true
 local FOV = 100
 local Smoothing = 0.1
@@ -47,7 +47,7 @@ local ShowFOVCircle = true
 local ShowESP = true
 local ESPColor = Color3.new(1, 0, 0) -- Red by default
 
--- FOV Circle Settings
+
 if not Drawing then
     return
 end
@@ -60,7 +60,7 @@ FOVCircle.Thickness = 2
 FOVCircle.Filled = false
 FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
--- ESP Settings
+
 local ESPDrawings = {}
 
 local function CreateESP(player)
@@ -88,7 +88,7 @@ end
 local function UpdateESP()
     for player, drawings in pairs(ESPDrawings) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            -- Team check for Arsenal
+            
             if player.Team ~= LocalPlayer.Team then
                 local head = player.Character.Head
                 local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
@@ -97,7 +97,7 @@ local function UpdateESP()
                     local scale = 1 / (screenPoint.Z * math.tan(math.rad(Camera.FieldOfView / 2)) * 1000)
                     local size = Vector2.new(4 * scale, 5 * scale)
 
-                    -- Update Box
+                    
                     drawings.Box.Size = size
                     drawings.Box.Position = Vector2.new(screenPoint.X - size.X / 2, screenPoint.Y - size.Y / 2)
                     drawings.Box.Visible = ShowESP
@@ -113,9 +113,9 @@ local function UpdateESP()
     end
 end
 
--- Add UI Elements
-local MainTab = Window:CreateTab("Main", 4483362458) -- Icon ID (optional)
-local SettingsTab = Window:CreateTab("Settings", 4483362458) -- Icon ID (optional)
+
+local MainTab = Window:CreateTab("Main", 4483362458) 
+local SettingsTab = Window:CreateTab("Settings", 4483362458) 
 
 MainTab:CreateToggle({
     Name = "Enable Aim Bot",
@@ -182,7 +182,7 @@ SettingsTab:CreateColorPicker({
     end
 })
 
--- Functions
+
 local function IsPlayerVisible(player)
     if not player.Character then return false end
     local target = player.Character:FindFirstChild("Head")
@@ -220,9 +220,9 @@ local function GetClosestPlayerInFOV()
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            -- Team check for Arsenal
+            
             if player.Team ~= LocalPlayer.Team then
-                -- Visibility and FOV check
+                
                 if IsPlayerVisible(player) and IsInFOVCircle(player) then
                     local screenPoint = Camera:WorldToViewportPoint(player.Character.Head.Position)
                     local circleCenter = FOVCircle.Position
@@ -241,11 +241,11 @@ local function GetClosestPlayerInFOV()
 end
 
 local function AimBot()
-    if not Enabled then return end -- Stop if Aim Bot is disabled
+    if not Enabled then return end 
     local closestPlayer = GetClosestPlayerInFOV()
     if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild("Head") then
         local target = closestPlayer.Character.Head
-        -- Smooth aim adjustment
+        
         local currentLook = Camera.CFrame.LookVector
         local targetLook = (target.Position - Camera.CFrame.Position).Unit
         local adjustedLook = (currentLook + (targetLook - currentLook) * Smoothing).Unit
@@ -253,7 +253,7 @@ local function AimBot()
     end
 end
 
--- Update FOV Circle Position and ESP
+
 local success, err = pcall(function()
     RunService.RenderStepped:Connect(function()
         FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -265,42 +265,42 @@ if not success then
     warn("Error in RenderStepped connection: " .. err)
 end
 
--- Initialize ESP for existing players
+
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         CreateESP(player)
     end
 end
 
--- Handle new players
+
 Players.PlayerAdded:Connect(function(player)
     CreateESP(player)
 end)
 
--- Handle player removal
+
 Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
--- Store script instance in _G for cleanup
+
 _G.AimBotScript = {
     Destroy = function()
-        -- Cleanup FOV Circle
+        
         if FOVCircle then
             FOVCircle:Remove()
         end
 
-        -- Cleanup ESP Drawings
+        
         for player, drawings in pairs(ESPDrawings) do
             RemoveESP(player)
         end
 
-        -- Disconnect RenderStepped connections
+        
         for _, connection in pairs(getconnections(RunService.RenderStepped)) do
             connection:Disconnect()
         end
 
-        -- Cleanup Rayfield UI
+        
         if Window then
             Window:Destroy()
         end
