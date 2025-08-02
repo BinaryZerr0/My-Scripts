@@ -5,48 +5,41 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 
-
 local GameName = "Arsenal"
 if game.PlaceId ~= 286090429 then 
     return
 end
 
-
 if _G.AimBotScript then
     _G.AimBotScript:Destroy() 
 end
 
-
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-if not Rayfield then
+local DropLib = loadstring(game:HttpGet("https://gitlab.com/0x45.xyz/droplib/-/raw/master/drop-minified.lua"))()
+if not DropLib then
     return
 end
 
+local gui = DropLib:Init({
+    PrimaryColor = Color3.fromRGB(30, 30, 30),
+    SecondaryColor = Color3.fromRGB(45, 45, 45),
+    AccentColor = Color3.fromRGB(255, 100, 100),
+    TextColor = Color3.new(1, 1, 1),
+    Font = Enum.Font.Gotham,
+    TextSize = 14
+}, game.CoreGui)
 
-local Window = Rayfield:CreateWindow({
-    Name = "Simple Arsenal Script",
-    LoadingTitle = "Loading Arsenal Script...",
-    LoadingSubtitle = "by BinaryZero",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "AimBotConfig",
-        FileName = "Config"
-    },
-    Discord = {
-        Enabled = false,
-        Invite = "noinvitelink", 
-        RememberJoins = true
-    }
-})
+local MainCategory = gui:CreateCategory("Arsenal Script - DropLib", UDim2.new(0, 100, 0, 100))
 
+local AimbotSection = MainCategory:CreateSection("Aimbot")
+local VisualsSection = MainCategory:CreateSection("Visuals")
+local SettingsSection = MainCategory:CreateSection("Settings")
 
 local Enabled = true
 local FOV = 100
 local Smoothing = 0.1
 local ShowFOVCircle = true
 local ShowESP = true
-local ESPColor = Color3.new(1, 0, 0) -- Red by default
-
+local ESPColor = Color3.new(0, 1, 0)
 
 if not Drawing then
     return
@@ -60,18 +53,40 @@ FOVCircle.Thickness = 2
 FOVCircle.Filled = false
 FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
-
 local ESPDrawings = {}
 
 local function CreateESP(player)
     if ESPDrawings[player] then return end
 
     local drawings = {}
-    drawings.Box = Drawing.new("Square")
-    drawings.Box.Visible = false
-    drawings.Box.Color = ESPColor
-    drawings.Box.Thickness = 2
-    drawings.Box.Filled = false
+    drawings.Spine = Drawing.new("Line")
+    drawings.LeftUpperArm = Drawing.new("Line")
+    drawings.LeftLowerArm = Drawing.new("Line")
+    drawings.RightUpperArm = Drawing.new("Line")
+    drawings.RightLowerArm = Drawing.new("Line")
+    drawings.LeftUpperLeg = Drawing.new("Line")
+    drawings.LeftLowerLeg = Drawing.new("Line")
+    drawings.RightUpperLeg = Drawing.new("Line")
+    drawings.RightLowerLeg = Drawing.new("Line")
+    
+    drawings.DistanceText = Drawing.new("Text")
+    drawings.DistanceText.Text = "0m"
+    drawings.DistanceText.Size = 16
+    drawings.DistanceText.Color = Color3.new(1, 1, 1)
+    drawings.DistanceText.Center = true
+    drawings.DistanceText.Outline = true
+    drawings.DistanceText.OutlineColor = Color3.new(0, 0, 0)
+    drawings.DistanceText.Visible = false
+    
+
+    
+    for name, line in pairs(drawings) do
+        if name:find("Arm") or name:find("Leg") or name == "Spine" then
+            line.Visible = false
+            line.Color = ESPColor
+            line.Thickness = 2
+        end
+    end
 
     ESPDrawings[player] = drawings
 end
@@ -88,100 +103,167 @@ end
 local function UpdateESP()
     for player, drawings in pairs(ESPDrawings) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            
             if player.Team ~= LocalPlayer.Team then
-                local head = player.Character.Head
-                local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
+                local character = player.Character
+                local head = character:FindFirstChild("Head")
+                local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+                
+                local leftUpperArm = character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftUpperArm")
+                local leftLowerArm = character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftLowerArm")
+                local rightUpperArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightUpperArm")
+                local rightLowerArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightLowerArm")
+                local leftUpperLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftUpperLeg")
+                local leftLowerLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftLowerLeg")
+                local rightUpperLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightUpperLeg")
+                local rightLowerLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightLowerLeg")
 
-                if onScreen then
-                    local scale = 1 / (screenPoint.Z * math.tan(math.rad(Camera.FieldOfView / 2)) * 1000)
-                    local size = Vector2.new(4 * scale, 5 * scale)
-
+                if head and torso then
+                    local headPos, headOnScreen = Camera:WorldToViewportPoint(head.Position)
+                    local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
                     
-                    drawings.Box.Size = size
-                    drawings.Box.Position = Vector2.new(screenPoint.X - size.X / 2, screenPoint.Y - size.Y / 2)
-                    drawings.Box.Visible = ShowESP
+                    if headOnScreen and torsoOnScreen then
+                        drawings.Spine.From = Vector2.new(headPos.X, headPos.Y)
+                        drawings.Spine.To = Vector2.new(torsoPos.X, torsoPos.Y)
+                        drawings.Spine.Visible = ShowESP
+                        
+                        if leftUpperArm then
+                            local leftUpperArmPos, leftUpperArmOnScreen = Camera:WorldToViewportPoint(leftUpperArm.Position)
+                            if leftUpperArmOnScreen then
+                                drawings.LeftUpperArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.LeftUpperArm.To = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
+                                drawings.LeftUpperArm.Visible = ShowESP
+                                
+                                if leftLowerArm and leftLowerArm ~= leftUpperArm then
+                                    local leftLowerArmPos, leftLowerArmOnScreen = Camera:WorldToViewportPoint(leftLowerArm.Position)
+                                    if leftLowerArmOnScreen then
+                                        drawings.LeftLowerArm.From = Vector2.new(leftUpperArmPos.X, leftUpperArmPos.Y)
+                                        drawings.LeftLowerArm.To = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
+                                        drawings.LeftLowerArm.Visible = ShowESP
+                                    else
+                                        drawings.LeftLowerArm.Visible = false
+                                    end
+                                else
+                                    drawings.LeftLowerArm.Visible = false
+                                end
+                            else
+                                drawings.LeftUpperArm.Visible = false
+                                drawings.LeftLowerArm.Visible = false
+                            end
+                        else
+                            drawings.LeftUpperArm.Visible = false
+                            drawings.LeftLowerArm.Visible = false
+                        end
+                        
+                        if rightUpperArm then
+                            local rightUpperArmPos, rightUpperArmOnScreen = Camera:WorldToViewportPoint(rightUpperArm.Position)
+                            if rightUpperArmOnScreen then
+                                drawings.RightUpperArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.RightUpperArm.To = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
+                                drawings.RightUpperArm.Visible = ShowESP
+                                
+                                if rightLowerArm and rightLowerArm ~= rightUpperArm then
+                                    local rightLowerArmPos, rightLowerArmOnScreen = Camera:WorldToViewportPoint(rightLowerArm.Position)
+                                    if rightLowerArmOnScreen then
+                                        drawings.RightLowerArm.From = Vector2.new(rightUpperArmPos.X, rightUpperArmPos.Y)
+                                        drawings.RightLowerArm.To = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
+                                        drawings.RightLowerArm.Visible = ShowESP
+                                    else
+                                        drawings.RightLowerArm.Visible = false
+                                    end
+                                else
+                                    drawings.RightLowerArm.Visible = false
+                                end
+                            else
+                                drawings.RightUpperArm.Visible = false
+                                drawings.RightLowerArm.Visible = false
+                            end
+                        else
+                            drawings.RightUpperArm.Visible = false
+                            drawings.RightLowerArm.Visible = false
+                        end
+                        
+                        if leftUpperLeg then
+                            local leftUpperLegPos, leftUpperLegOnScreen = Camera:WorldToViewportPoint(leftUpperLeg.Position)
+                            if leftUpperLegOnScreen then
+                                drawings.LeftUpperLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.LeftUpperLeg.To = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
+                                drawings.LeftUpperLeg.Visible = ShowESP
+                                
+                                if leftLowerLeg and leftLowerLeg ~= leftUpperLeg then
+                                    local leftLowerLegPos, leftLowerLegOnScreen = Camera:WorldToViewportPoint(leftLowerLeg.Position)
+                                    if leftLowerLegOnScreen then
+                                        drawings.LeftLowerLeg.From = Vector2.new(leftUpperLegPos.X, leftUpperLegPos.Y)
+                                        drawings.LeftLowerLeg.To = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
+                                        drawings.LeftLowerLeg.Visible = ShowESP
+                                    else
+                                        drawings.LeftLowerLeg.Visible = false
+                                    end
+                                else
+                                    drawings.LeftLowerLeg.Visible = false
+                                end
+                            else
+                                drawings.LeftUpperLeg.Visible = false
+                                drawings.LeftLowerLeg.Visible = false
+                            end
+                        else
+                            drawings.LeftUpperLeg.Visible = false
+                            drawings.LeftLowerLeg.Visible = false
+                        end
+                        
+                        if rightUpperLeg then
+                            local rightUpperLegPos, rightUpperLegOnScreen = Camera:WorldToViewportPoint(rightUpperLeg.Position)
+                            if rightUpperLegOnScreen then
+                                drawings.RightUpperLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.RightUpperLeg.To = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
+                                drawings.RightUpperLeg.Visible = ShowESP
+                                
+                                if rightLowerLeg and rightLowerLeg ~= rightUpperLeg then
+                                    local rightLowerLegPos, rightLowerLegOnScreen = Camera:WorldToViewportPoint(rightLowerLeg.Position)
+                                    if rightLowerLegOnScreen then
+                                        drawings.RightLowerLeg.From = Vector2.new(rightUpperLegPos.X, rightUpperLegPos.Y)
+                                        drawings.RightLowerLeg.To = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
+                                        drawings.RightLowerLeg.Visible = ShowESP
+                                    else
+                                        drawings.RightLowerLeg.Visible = false
+                                    end
+                                else
+                                    drawings.RightLowerLeg.Visible = false
+                                end
+                            else
+                                drawings.RightUpperLeg.Visible = false
+                                drawings.RightLowerLeg.Visible = false
+                            end
+                        else
+                            drawings.RightUpperLeg.Visible = false
+                            drawings.RightLowerLeg.Visible = false
+                        end
+                        
+                        local distance = math.floor((head.Position - Camera.CFrame.Position).Magnitude)
+                        drawings.DistanceText.Text = distance .. "m"
+                        drawings.DistanceText.Position = Vector2.new(headPos.X, headPos.Y - 25)
+                        drawings.DistanceText.Visible = ShowESP
+                    else
+                        for _, element in pairs(drawings) do
+                            element.Visible = false
+                        end
+                    end
                 else
-                    drawings.Box.Visible = false
+                    for _, element in pairs(drawings) do
+                        element.Visible = false
+                    end
                 end
             else
-                drawings.Box.Visible = false
+                for _, element in pairs(drawings) do
+                    element.Visible = false
+                end
             end
         else
-            drawings.Box.Visible = false
+            for _, element in pairs(drawings) do
+                element.Visible = false
+            end
         end
     end
 end
-
-
-local MainTab = Window:CreateTab("Main", 4483362458) 
-local SettingsTab = Window:CreateTab("Settings", 4483362458) 
-
-MainTab:CreateToggle({
-    Name = "Enable Aim Bot",
-    CurrentValue = Enabled,
-    Flag = "EnabledToggle",
-    Callback = function(value)
-        Enabled = value
-    end
-})
-
-MainTab:CreateToggle({
-    Name = "Show FOV Circle",
-    CurrentValue = ShowFOVCircle,
-    Flag = "ShowFOVToggle",
-    Callback = function(value)
-        ShowFOVCircle = value
-        FOVCircle.Visible = value
-    end
-})
-
-MainTab:CreateToggle({
-    Name = "Show ESP",
-    CurrentValue = ShowESP,
-    Flag = "ShowESPToggle",
-    Callback = function(value)
-        ShowESP = value
-    end
-})
-
-SettingsTab:CreateSlider({
-    Name = "FOV Size",
-    Range = {50, 300},
-    Increment = 1,
-    Suffix = " studs",
-    CurrentValue = FOV,
-    Flag = "FOVSlider",
-    Callback = function(value)
-        FOV = value
-        FOVCircle.Radius = value
-    end
-})
-
-SettingsTab:CreateSlider({
-    Name = "Smoothing",
-    Range = {0, 1},
-    Increment = 0.01,
-    Suffix = "",
-    CurrentValue = Smoothing,
-    Flag = "SmoothingSlider",
-    Callback = function(value)
-        Smoothing = value
-    end
-})
-
-SettingsTab:CreateColorPicker({
-    Name = "ESP Color",
-    Color = ESPColor,
-    Flag = "ESPColorPicker",
-    Callback = function(value)
-        ESPColor = value
-        for _, drawings in pairs(ESPDrawings) do
-            drawings.Box.Color = value
-        end
-    end
-})
-
 
 local function IsPlayerVisible(player)
     if not player.Character then return false end
@@ -220,9 +302,7 @@ local function GetClosestPlayerInFOV()
 
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            
             if player.Team ~= LocalPlayer.Team then
-                
                 if IsPlayerVisible(player) and IsInFOVCircle(player) then
                     local screenPoint = Camera:WorldToViewportPoint(player.Character.Head.Position)
                     local circleCenter = FOVCircle.Position
@@ -254,6 +334,67 @@ local function AimBot()
 end
 
 
+
+AimbotSection:CreateSwitch("Enable Aimbot", function(value)
+    Enabled = value
+    print("Aimbot " .. (value and "Enabled" or "Disabled"))
+end, Enabled)
+
+VisualsSection:CreateSwitch("Show FOV Circle", function(value)
+    ShowFOVCircle = value
+    FOVCircle.Visible = value
+    print("FOV Circle " .. (value and "Enabled" or "Disabled"))
+end, ShowFOVCircle)
+
+VisualsSection:CreateSwitch("Show ESP Skeleton", function(value)
+    ShowESP = value
+    print("ESP Skeleton " .. (value and "Enabled" or "Disabled"))
+end, ShowESP)
+
+SettingsSection:CreateSlider("FOV Size", function(value)
+    FOV = value
+    FOVCircle.Radius = value
+    print("FOV set to: " .. value)
+end, 50, 300, 1, false, FOV)
+
+SettingsSection:CreateSlider("Smoothing", function(value)
+    Smoothing = value / 100
+    print("Smoothing set to: " .. (value / 100))
+end, 30, 100, 1, false, Smoothing * 100)
+
+SettingsSection:CreateColorPicker("ESP Color", function(value)
+    ESPColor = value
+    for _, drawings in pairs(ESPDrawings) do
+        if drawings.Spine then drawings.Spine.Color = value end
+        if drawings.LeftUpperArm then drawings.LeftUpperArm.Color = value end
+        if drawings.LeftLowerArm then drawings.LeftLowerArm.Color = value end
+        if drawings.RightUpperArm then drawings.RightUpperArm.Color = value end
+        if drawings.RightLowerArm then drawings.RightLowerArm.Color = value end
+        if drawings.LeftUpperLeg then drawings.LeftUpperLeg.Color = value end
+        if drawings.LeftLowerLeg then drawings.LeftLowerLeg.Color = value end
+        if drawings.RightUpperLeg then drawings.RightUpperLeg.Color = value end
+        if drawings.RightLowerLeg then drawings.RightLowerLeg.Color = value end
+    end
+    print("ESP Color changed to: " .. tostring(value))
+end, false, ESPColor)
+
+SettingsSection:CreateButton("Reset Settings", function()
+    Enabled = true
+    FOV = 100
+    Smoothing = 0.1
+    ShowFOVCircle = true
+    ShowESP = true
+    ESPColor = Color3.new(0, 1, 0)
+    FOVCircle.Radius = FOV
+    FOVCircle.Visible = ShowFOVCircle
+    for _, drawings in pairs(ESPDrawings) do
+        for _, line in pairs(drawings) do
+            line.Color = ESPColor
+        end
+    end
+    print("Settings reset to default")
+end)
+
 local success, err = pcall(function()
     RunService.RenderStepped:Connect(function()
         FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -261,10 +402,10 @@ local success, err = pcall(function()
     end)
     RunService.RenderStepped:Connect(AimBot)
 end)
+
 if not success then
     warn("Error in RenderStepped connection: " .. err)
 end
-
 
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
@@ -272,37 +413,44 @@ for _, player in pairs(Players:GetPlayers()) do
     end
 end
 
-
 Players.PlayerAdded:Connect(function(player)
     CreateESP(player)
 end)
-
 
 Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
-
 _G.AimBotScript = {
     Destroy = function()
-        
         if FOVCircle then
             FOVCircle:Remove()
         end
 
-        
         for player, drawings in pairs(ESPDrawings) do
             RemoveESP(player)
         end
 
-        
         for _, connection in pairs(getconnections(RunService.RenderStepped)) do
             connection:Disconnect()
         end
 
-        
-        if Window then
-            Window:Destroy()
+        if gui then
+            pcall(function() gui:CleanUp() end)
+            pcall(function() gui:Hide() end)
+            if gui.ScreenGui then
+                gui.ScreenGui:Destroy()
+            end
         end
+        
+        for _, obj in pairs(game.CoreGui:GetChildren()) do
+            if obj.Name:find("DropLib") or obj.Name:find("Arsenal") then
+                obj:Destroy()
+            end
+        end
+        
+        _G.AimBotScript = nil
+
+        print("Arsenal Script and GUI destroyed")
     end
 }
