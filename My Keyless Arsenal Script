@@ -31,15 +31,31 @@ local gui = DropLib:Init({
 local MainCategory = gui:CreateCategory("Arsenal Script - DropLib", UDim2.new(0, 100, 0, 100))
 
 local AimbotSection = MainCategory:CreateSection("Aimbot")
+local SilentAimSection = MainCategory:CreateSection("Silent Aim")
 local VisualsSection = MainCategory:CreateSection("Visuals")
+local DetectionSection = MainCategory:CreateSection("Script Detection")
 local SettingsSection = MainCategory:CreateSection("Settings")
+
 
 local Enabled = true
 local FOV = 100
 local Smoothing = 0.1
+
+
+local SilentAimEnabled = false
+local HitboxSize = 13
+local HitboxTransparency = 10
+
+
 local ShowFOVCircle = true
 local ShowESP = true
 local ESPColor = Color3.new(0, 1, 0)
+
+
+local ShowScriptUsers = true
+local ScriptIdentifier = "ArsenalScript_" .. math.random(10000, 99999)
+local DetectedUsers = {}
+local UserListText = nil
 
 if not Drawing then
     return
@@ -54,6 +70,148 @@ FOVCircle.Filled = false
 FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
 local ESPDrawings = {}
+
+
+local function BroadcastPresence()
+    if not _G.ArsenalScriptUsers then
+        _G.ArsenalScriptUsers = {}
+    end
+    _G.ArsenalScriptUsers[LocalPlayer.Name] = {
+        identifier = ScriptIdentifier,
+        timestamp = tick(),
+        player = LocalPlayer
+    }
+end
+
+local function UpdateDetectedUsers()
+    if not _G.ArsenalScriptUsers then return end
+    
+    DetectedUsers = {}
+    local currentTime = tick()
+    
+    for playerName, data in pairs(_G.ArsenalScriptUsers) do
+    
+        if currentTime - data.timestamp > 10 then
+            _G.ArsenalScriptUsers[playerName] = nil
+        else
+            table.insert(DetectedUsers, playerName)
+        end
+    end
+    
+
+    if UserListText then
+        if #DetectedUsers > 0 then
+            UserListText.Text = "Script Users (" .. #DetectedUsers .. "):\n" .. table.concat(DetectedUsers, "\n")
+        else
+            UserListText.Text = "No other script users detected"
+        end
+        UserListText.Visible = ShowScriptUsers
+    end
+end
+
+local function CreateUserListDisplay()
+    if UserListText then return end
+    
+    UserListText = Drawing.new("Text")
+    UserListText.Text = "Scanning for script users..."
+    UserListText.Size = 14
+    UserListText.Color = Color3.new(1, 1, 1)
+    UserListText.Position = Vector2.new(10, 100)
+    UserListText.Outline = true
+    UserListText.OutlineColor = Color3.new(0, 0, 0)
+    UserListText.Visible = ShowScriptUsers
+end
+
+
+local function getPlayersName()
+    for _, v in pairs(game:GetChildren()) do
+        if v.ClassName == "Players" then
+            return v.Name
+        end
+    end
+end
+
+local players = game[getPlayersName()]
+local localPlayer = players.LocalPlayer
+
+local silentAimConnections = {}
+
+local function StartSilentAim()
+    if silentAimConnections.transparency then
+        silentAimConnections.transparency:Disconnect()
+    end
+    if silentAimConnections.hitbox then
+        silentAimConnections.hitbox:Disconnect()
+    end
+    
+    
+    silentAimConnections.transparency = coroutine.wrap(function()
+        while SilentAimEnabled do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= localPlayer and player.Character then
+                    for _, partName in pairs({"RightUpperLeg", "LeftUpperLeg", "HeadHB", "HumanoidRootPart"}) do
+                        local part = player.Character:FindFirstChild(partName)
+                        if part then
+                            part.Transparency = HitboxTransparency
+                        end
+                    end
+                end
+            end
+            wait(1)
+        end
+    end)()
+    
+    
+    silentAimConnections.hitbox = coroutine.wrap(function()
+        while SilentAimEnabled do
+            for _, player in pairs(players:GetPlayers()) do
+                if player ~= localPlayer and player.Character then
+                    for _, partName in pairs({"RightUpperLeg", "LeftUpperLeg", "HeadHB", "HumanoidRootPart"}) do
+                        local part = player.Character:FindFirstChild(partName)
+                        if part then
+                            part.CanCollide = false
+                            part.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                        end
+                    end
+                end
+            end
+            wait(1)
+        end
+    end)()
+end
+
+local function StopSilentAim()
+    if silentAimConnections.transparency then
+        silentAimConnections.transparency:Disconnect()
+        silentAimConnections.transparency = nil
+    end
+    if silentAimConnections.hitbox then
+        silentAimConnections.hitbox:Disconnect()
+        silentAimConnections.hitbox = nil
+    end
+    
+    
+    for _, player in pairs(players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            for _, partName in pairs({"RightUpperLeg", "LeftUpperLeg", "HeadHB", "HumanoidRootPart"}) do
+                local part = player.Character:FindFirstChild(partName)
+                if part then
+                    part.Transparency = 0
+                    part.CanCollide = true
+                
+                    if partName == "HumanoidRootPart" then
+                        part.Size = Vector3.new(2, 2, 1)
+                    elseif partName:find("Leg") then
+                        part.Size = Vector3.new(1, 2, 1)
+                    elseif partName == "HeadHB" then
+                        part.Size = Vector3.new(2, 1, 1)
+                    end
+                end
+            end
+        end
+    end
+end
+
 
 local function CreateESP(player)
     if ESPDrawings[player] then return end
@@ -77,8 +235,6 @@ local function CreateESP(player)
     drawings.DistanceText.Outline = true
     drawings.DistanceText.OutlineColor = Color3.new(0, 0, 0)
     drawings.DistanceText.Visible = false
-    
-
     
     for name, line in pairs(drawings) do
         if name:find("Arm") or name:find("Leg") or name == "Spine" then
@@ -265,6 +421,7 @@ local function UpdateESP()
     end
 end
 
+
 local function IsPlayerVisible(player)
     if not player.Character then return false end
     local target = player.Character:FindFirstChild("Head")
@@ -334,11 +491,20 @@ local function AimBot()
 end
 
 
-
 AimbotSection:CreateSwitch("Enable Aimbot", function(value)
     Enabled = value
     print("Aimbot " .. (value and "Enabled" or "Disabled"))
 end, Enabled)
+
+SilentAimSection:CreateSwitch("Enable Silent Aim", function(value)
+    SilentAimEnabled = value
+    if value then
+        StartSilentAim()
+    else
+        StopSilentAim()
+    end
+    print("Silent Aim " .. (value and "Enabled" or "Disabled"))
+end, SilentAimEnabled)
 
 VisualsSection:CreateSwitch("Show FOV Circle", function(value)
     ShowFOVCircle = value
@@ -350,6 +516,19 @@ VisualsSection:CreateSwitch("Show ESP Skeleton", function(value)
     ShowESP = value
     print("ESP Skeleton " .. (value and "Enabled" or "Disabled"))
 end, ShowESP)
+
+DetectionSection:CreateSwitch("Show Script Users", function(value)
+    ShowScriptUsers = value
+    if UserListText then
+        UserListText.Visible = value
+    end
+    print("Script User Detection " .. (value and "Enabled" or "Disabled"))
+end, ShowScriptUsers)
+
+DetectionSection:CreateButton("Refresh User List", function()
+    UpdateDetectedUsers()
+    print("User list refreshed - Found " .. #DetectedUsers .. " script users")
+end)
 
 SettingsSection:CreateSlider("FOV Size", function(value)
     FOV = value
@@ -380,13 +559,17 @@ end, false, ESPColor)
 
 SettingsSection:CreateButton("Reset Settings", function()
     Enabled = true
+    SilentAimEnabled = false
     FOV = 100
     Smoothing = 0.1
     ShowFOVCircle = true
     ShowESP = true
     ESPColor = Color3.new(0, 1, 0)
+    HitboxSize = 13
+    HitboxTransparency = 10
     FOVCircle.Radius = FOV
     FOVCircle.Visible = ShowFOVCircle
+    StopSilentAim()
     for _, drawings in pairs(ESPDrawings) do
         for _, line in pairs(drawings) do
             line.Color = ESPColor
@@ -395,23 +578,39 @@ SettingsSection:CreateButton("Reset Settings", function()
     print("Settings reset to default")
 end)
 
+
+CreateUserListDisplay()
+BroadcastPresence()
+
+
 local success, err = pcall(function()
     RunService.RenderStepped:Connect(function()
         FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
         UpdateESP()
     end)
     RunService.RenderStepped:Connect(AimBot)
+    
+    
+    spawn(function()
+        while _G.AimBotScript do
+            BroadcastPresence()
+            UpdateDetectedUsers()
+            wait(2)
+        end
+    end)
 end)
 
 if not success then
     warn("Error in RenderStepped connection: " .. err)
 end
 
+
 for _, player in pairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         CreateESP(player)
     end
 end
+
 
 Players.PlayerAdded:Connect(function(player)
     CreateESP(player)
@@ -421,10 +620,22 @@ Players.PlayerRemoving:Connect(function(player)
     RemoveESP(player)
 end)
 
+
 _G.AimBotScript = {
     Destroy = function()
+
+        StopSilentAim()
+
         if FOVCircle then
             FOVCircle:Remove()
+        end
+
+        if UserListText then
+            UserListText:Remove()
+        end
+
+        if _G.ArsenalScriptUsers and _G.ArsenalScriptUsers[LocalPlayer.Name] then
+            _G.ArsenalScriptUsers[LocalPlayer.Name] = nil
         end
 
         for player, drawings in pairs(ESPDrawings) do
