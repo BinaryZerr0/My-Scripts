@@ -1,0 +1,460 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local TweenService = game:GetService("TweenService")
+
+local GameName = "Arsenal"
+if game.PlaceId ~= 286090429 then 
+    return
+end
+
+if _G.AimBotScript then
+    _G.AimBotScript:Destroy() 
+end
+
+-- Mobile-optimized GUI creation
+local function CreateMobileGUI()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "ArsenalMobile"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = game.CoreGui
+    
+    -- Main frame with mobile-friendly size
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 300, 0, 400)
+    MainFrame.Position = UDim2.new(0, 10, 0, 50)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Active = true
+    MainFrame.Draggable = true
+    MainFrame.Parent = ScreenGui
+    
+    -- Corner rounding
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 10)
+    Corner.Parent = MainFrame
+    
+    -- Title bar
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Name = "TitleBar"
+    TitleBar.Size = UDim2.new(1, 0, 0, 30)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Parent = MainFrame
+    
+    local TitleCorner = Instance.new("UICorner")
+    TitleCorner.CornerRadius = UDim.new(0, 10)
+    TitleCorner.Parent = TitleBar
+    
+    local Title = Instance.new("TextLabel")
+    Title.Name = "Title"
+    Title.Size = UDim2.new(1, -60, 1, 0)
+    Title.Position = UDim2.new(0, 10, 0, 0)
+    Title.BackgroundTransparency = 1
+    Title.Text = "Arsenal Mobile"
+    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.TextScaled = true
+    Title.Font = Enum.Font.GothamBold
+    Title.Parent = TitleBar
+    
+    -- Minimize button
+    local MinimizeBtn = Instance.new("TextButton")
+    MinimizeBtn.Name = "MinimizeBtn"
+    MinimizeBtn.Size = UDim2.new(0, 25, 0, 25)
+    MinimizeBtn.Position = UDim2.new(1, -30, 0, 2.5)
+    MinimizeBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    MinimizeBtn.Text = "-"
+    MinimizeBtn.TextColor3 = Color3.fromRGB(30, 30, 30)
+    MinimizeBtn.TextScaled = true
+    MinimizeBtn.Font = Enum.Font.GothamBold
+    MinimizeBtn.Parent = TitleBar
+    
+    local MinCorner = Instance.new("UICorner")
+    MinCorner.CornerRadius = UDim.new(0, 5)
+    MinCorner.Parent = MinimizeBtn
+    
+    -- Content frame
+    local ContentFrame = Instance.new("ScrollingFrame")
+    ContentFrame.Name = "ContentFrame"
+    ContentFrame.Size = UDim2.new(1, -20, 1, -40)
+    ContentFrame.Position = UDim2.new(0, 10, 0, 35)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.ScrollBarThickness = 5
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
+    ContentFrame.Parent = MainFrame
+    
+    return ScreenGui, MainFrame, ContentFrame, MinimizeBtn
+end
+
+-- Mobile-friendly button creation
+local function CreateMobileButton(parent, text, position, size, callback)
+    local Button = Instance.new("TextButton")
+    Button.Name = text .. "Btn"
+    Button.Size = size or UDim2.new(1, -20, 0, 35)
+    Button.Position = position
+    Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Button.Text = text
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.TextScaled = true
+    Button.Font = Enum.Font.Gotham
+    Button.Parent = parent
+    
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0, 5)
+    ButtonCorner.Parent = Button
+    
+    -- Touch feedback
+    Button.MouseButton1Click:Connect(function()
+        local tween = TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(255, 100, 100)})
+        tween:Play()
+        tween.Completed:Connect(function()
+            local tween2 = TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(45, 45, 45)})
+            tween2:Play()
+        end)
+        if callback then callback() end
+    end)
+    
+    return Button
+end
+
+-- Mobile-friendly toggle creation
+local function CreateMobileToggle(parent, text, position, size, callback)
+    local Frame = Instance.new("Frame")
+    Frame.Name = text .. "Frame"
+    Frame.Size = size or UDim2.new(1, -20, 0, 35)
+    Frame.Position = position
+    Frame.BackgroundTransparency = 1
+    Frame.Parent = parent
+    
+    local Label = Instance.new("TextLabel")
+    Label.Name = "Label"
+    Label.Size = UDim2.new(0.7, 0, 1, 0)
+    Label.Position = UDim2.new(0, 0, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = text
+    Label.TextColor3 = Color3.new(1, 1, 1)
+    Label.TextScaled = true
+    Label.Font = Enum.Font.Gotham
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Frame
+    
+    local Toggle = Instance.new("TextButton")
+    Toggle.Name = "Toggle"
+    Toggle.Size = UDim2.new(0, 50, 0, 25)
+    Toggle.Position = UDim2.new(1, -55, 0, 5)
+    Toggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    Toggle.Text = "ON"
+    Toggle.TextColor3 = Color3.new(1, 1, 1)
+    Toggle.TextScaled = true
+    Toggle.Font = Enum.Font.GothamBold
+    Toggle.Parent = Frame
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 12)
+    ToggleCorner.Parent = Toggle
+    
+    local isEnabled = true
+    Toggle.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        Toggle.Text = isEnabled and "ON" or "OFF"
+        Toggle.BackgroundColor3 = isEnabled and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(100, 100, 100)
+        if callback then callback(isEnabled) end
+    end)
+    
+    return Frame, Toggle, function() return isEnabled end
+end
+
+-- Initialize mobile GUI
+local ScreenGui, MainFrame, ContentFrame, MinimizeBtn = CreateMobileGUI()
+
+-- Variables
+local Enabled = true
+local FOV = 100
+local Smoothing = 0.1
+local SilentAimEnabled = false
+local HitboxSize = 13
+local HitboxTransparency = 10
+local ShowFOVCircle = true
+local ShowESP = false
+local ESPColor = Color3.fromRGB(255, 100, 100)
+
+-- Mobile input handling
+local TouchEnabled = UserInputService.TouchEnabled
+local connections = {}
+local silentAimConnections = {}
+local ESPDrawings = {}
+
+-- FOV Circle (mobile-optimized)
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Color = Color3.fromRGB(255, 100, 100)
+FOVCircle.Thickness = 2
+FOVCircle.Transparency = 0.5
+FOVCircle.Filled = false
+FOVCircle.Radius = FOV
+FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+-- Mobile-optimized target acquisition
+local function GetClosestPlayerToCenter()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if player.Team ~= LocalPlayer.Team then
+                local head = player.Character.Head
+                local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                
+                if onScreen then
+                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                    if distance < FOV and distance < shortestDistance then
+                        closestPlayer = player
+                        shortestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestPlayer
+end
+
+-- Mobile aimbot function
+local function MobileAimbot()
+    if not Enabled then return end
+    
+    local target = GetClosestPlayerToCenter()
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        local head = target.Character.Head
+        local targetPosition = head.Position + head.Velocity * 0.1 -- Prediction
+        
+        -- Smooth camera movement for mobile
+        local currentCFrame = Camera.CFrame
+        local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetPosition)
+        
+        Camera.CFrame = currentCFrame:Lerp(targetCFrame, Smoothing)
+    end
+end
+
+-- Create mobile UI elements
+local yPos = 10
+
+-- Aimbot section
+local AimbotLabel = Instance.new("TextLabel")
+AimbotLabel.Size = UDim2.new(1, -20, 0, 25)
+AimbotLabel.Position = UDim2.new(0, 10, 0, yPos)
+AimbotLabel.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+AimbotLabel.Text = "AIMBOT"
+AimbotLabel.TextColor3 = Color3.new(1, 1, 1)
+AimbotLabel.TextScaled = true
+AimbotLabel.Font = Enum.Font.GothamBold
+AimbotLabel.Parent = ContentFrame
+
+local LabelCorner = Instance.new("UICorner")
+LabelCorner.CornerRadius = UDim.new(0, 5)
+LabelCorner.Parent = AimbotLabel
+
+yPos = yPos + 35
+
+local _, AimbotToggle, GetAimbotState = CreateMobileToggle(ContentFrame, "Enable Aimbot", UDim2.new(0, 10, 0, yPos), nil, function(state)
+    Enabled = state
+end)
+
+yPos = yPos + 45
+
+-- FOV Circle toggle
+local _, FOVToggle, GetFOVState = CreateMobileToggle(ContentFrame, "Show FOV Circle", UDim2.new(0, 10, 0, yPos), nil, function(state)
+    ShowFOVCircle = state
+    FOVCircle.Visible = state
+end)
+
+yPos = yPos + 45
+
+local ESPLabel = Instance.new("TextLabel")
+ESPLabel.Size = UDim2.new(1, -20, 0, 25)
+ESPLabel.Position = UDim2.new(0, 10, 0, yPos)
+ESPLabel.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+ESPLabel.Text = "ESP"
+ESPLabel.TextColor3 = Color3.new(1, 1, 1)
+ESPLabel.TextScaled = true
+ESPLabel.Font = Enum.Font.GothamBold
+ESPLabel.Parent = ContentFrame
+
+local ESPCorner = Instance.new("UICorner")
+ESPCorner.CornerRadius = UDim.new(0, 5)
+ESPCorner.Parent = ESPLabel
+
+yPos = yPos + 35
+
+local _, ESPToggle, GetESPState = CreateMobileToggle(ContentFrame, "Enable ESP", UDim2.new(0, 10, 0, yPos), nil, function(state)
+    ShowESP = state
+end)
+
+yPos = yPos + 45
+
+local SilentLabel = Instance.new("TextLabel")
+SilentLabel.Size = UDim2.new(1, -20, 0, 25)
+SilentLabel.Position = UDim2.new(0, 10, 0, yPos)
+SilentLabel.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+SilentLabel.Text = "SILENT AIM"
+SilentLabel.TextColor3 = Color3.new(1, 1, 1)
+SilentLabel.TextScaled = true
+SilentLabel.Font = Enum.Font.GothamBold
+SilentLabel.Parent = ContentFrame
+
+local SilentCorner = Instance.new("UICorner")
+SilentCorner.CornerRadius = UDim.new(0, 5)
+SilentCorner.Parent = SilentLabel
+
+yPos = yPos + 35
+
+local _, SilentToggle, GetSilentState = CreateMobileToggle(ContentFrame, "Enable Silent Aim", UDim2.new(0, 10, 0, yPos), nil, function(state)
+    SilentAimEnabled = state
+end)
+
+yPos = yPos + 55
+
+CreateMobileButton(ContentFrame, "Reset All", UDim2.new(0, 10, 0, yPos), UDim2.new(0.48, 0, 0, 35), function()
+    Enabled = false
+    SilentAimEnabled = false
+    ShowESP = false
+    ShowFOVCircle = false
+    FOVCircle.Visible = false
+    
+
+    AimbotToggle.Text = "OFF"
+    AimbotToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    ESPToggle.Text = "OFF"
+    ESPToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    SilentToggle.Text = "OFF"
+    SilentToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    FOVToggle.Text = "OFF"
+    FOVToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+end)
+
+CreateMobileButton(ContentFrame, "Destroy GUI", UDim2.new(0.52, 0, 0, yPos), UDim2.new(0.48, 0, 0, 35), function()
+    ScreenGui:Destroy()
+    if connections.aimbot then connections.aimbot:Disconnect() end
+    if connections.esp then connections.esp:Disconnect() end
+    FOVCircle:Remove()
+    _G.AimBotScript = nil
+end)
+
+local isMinimized = false
+MinimizeBtn.MouseButton1Click:Connect(function()
+    isMinimized = not isMinimized
+    local targetSize = isMinimized and UDim2.new(0, 300, 0, 30) or UDim2.new(0, 300, 0, 400)
+    local tween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {Size = targetSize})
+    tween:Play()
+    MinimizeBtn.Text = isMinimized and "+" or "-"
+end)
+
+local function CreateESPForPlayer(player)
+    if ESPDrawings[player] then return end
+    
+    ESPDrawings[player] = {
+        Spine = Drawing.new("Line"),
+        LeftUpperArm = Drawing.new("Line"),
+        RightUpperArm = Drawing.new("Line"),
+        LeftLowerArm = Drawing.new("Line"),
+        RightLowerArm = Drawing.new("Line"),
+        LeftUpperLeg = Drawing.new("Line"),
+        RightUpperLeg = Drawing.new("Line"),
+        LeftLowerLeg = Drawing.new("Line"),
+        RightLowerLeg = Drawing.new("Line")
+    }
+    
+    for _, drawing in pairs(ESPDrawings[player]) do
+        drawing.Color = ESPColor
+        drawing.Thickness = 2
+        drawing.Transparency = 1
+        drawing.Visible = false
+    end
+end
+
+connections.aimbot = RunService.Heartbeat:Connect(function()
+    if TouchEnabled then
+        MobileAimbot()
+    end
+
+    if ShowFOVCircle then
+        FOVCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        FOVCircle.Radius = FOV
+        FOVCircle.Visible = true
+    else
+        FOVCircle.Visible = false
+    end
+end)
+
+connections.esp = RunService.Heartbeat:Connect(function()
+    if not ShowESP then
+        for _, drawings in pairs(ESPDrawings) do
+            for _, drawing in pairs(drawings) do
+                drawing.Visible = false
+            end
+        end
+        return
+    end
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            CreateESPForPlayer(player)
+        end
+    end
+
+    for player, drawings in pairs(ESPDrawings) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if player.Team ~= LocalPlayer.Team then
+                local character = player.Character
+                local head = character:FindFirstChild("Head")
+                local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+                
+                if head and torso then
+                    local headPos, headOnScreen = Camera:WorldToViewportPoint(head.Position)
+                    local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
+                    
+                    if headOnScreen and torsoOnScreen then
+                        drawings.Spine.From = Vector2.new(headPos.X, headPos.Y)
+                        drawings.Spine.To = Vector2.new(torsoPos.X, torsoPos.Y)
+                        drawings.Spine.Visible = ShowESP
+                    else
+                        for _, element in pairs(drawings) do
+                            element.Visible = false
+                        end
+                    end
+                else
+                    for _, element in pairs(drawings) do
+                        element.Visible = false
+                    end
+                end
+            else
+                for _, element in pairs(drawings) do
+                    element.Visible = false
+                end
+            end
+        else
+            for _, element in pairs(drawings) do
+                element.Visible = false
+            end
+        end
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if ESPDrawings[player] then
+        for _, drawing in pairs(ESPDrawings[player]) do
+            drawing:Remove()
+        end
+        ESPDrawings[player] = nil
+    end
+end)
+
+_G.AimBotScript = ScreenGui
+
+print("Arsenal Mobile Script Loaded Successfully!")
+print("Compatible with Delta & Krnl executors")
+print("Touch-optimized interface ready!")
