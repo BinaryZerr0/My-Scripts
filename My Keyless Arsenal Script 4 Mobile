@@ -423,28 +423,38 @@ MinimizeBtn.MouseButton1Click:Connect(function()
     MinimizeBtn.Text = isMinimized and "+" or "-"
 end)
 
--- ESP Functions (simplified for mobile)
+-- Enhanced ESP Functions with full skeleton for mobile
 local function CreateESPForPlayer(player)
     if ESPDrawings[player] then return end
     
     ESPDrawings[player] = {
+        -- Main spine
         Spine = Drawing.new("Line"),
+        -- Arms
         LeftUpperArm = Drawing.new("Line"),
         RightUpperArm = Drawing.new("Line"),
         LeftLowerArm = Drawing.new("Line"),
         RightLowerArm = Drawing.new("Line"),
+        -- Legs
         LeftUpperLeg = Drawing.new("Line"),
         RightUpperLeg = Drawing.new("Line"),
         LeftLowerLeg = Drawing.new("Line"),
-        RightLowerLeg = Drawing.new("Line")
+        RightLowerLeg = Drawing.new("Line"),
+        -- Additional connections
+        LeftShoulder = Drawing.new("Line"),
+        RightShoulder = Drawing.new("Line"),
+        LeftHip = Drawing.new("Line"),
+        RightHip = Drawing.new("Line")
     }
     
     for _, drawing in pairs(ESPDrawings[player]) do
         drawing.Color = ESPColor
-        drawing.Thickness = 2
-        drawing.Transparency = 1
+        drawing.Thickness = 3  -- Thicker for mobile visibility
+        drawing.Transparency = 0.8  -- More visible
         drawing.Visible = false
     end
+    
+    DebugPrint("Created ESP for player: " .. player.Name)
 end
 
 -- Main loops
@@ -480,38 +490,193 @@ connections.esp = RunService.Heartbeat:Connect(function()
         end
     end
     
-    -- Update ESP (simplified version)
+    -- Enhanced ESP Update with full skeleton
     for player, drawings in pairs(ESPDrawings) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
             if player.Team ~= LocalPlayer.Team then
                 local character = player.Character
+                local humanoid = character:FindFirstChild("Humanoid")
+                
+                -- Get body parts (R15 and R6 compatible)
                 local head = character:FindFirstChild("Head")
                 local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+                local leftArm = character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftUpperArm")
+                local rightArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightUpperArm")
+                local leftLeg = character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftUpperLeg")
+                local rightLeg = character:FindFirstChild("Right Leg") or character:FindFirstChild("RightUpperLeg")
+                
+                -- R15 specific parts
+                local leftLowerArm = character:FindFirstChild("LeftLowerArm")
+                local rightLowerArm = character:FindFirstChild("RightLowerArm")
+                local leftLowerLeg = character:FindFirstChild("LeftLowerLeg")
+                local rightLowerLeg = character:FindFirstChild("RightLowerLeg")
+                local leftHand = character:FindFirstChild("LeftHand")
+                local rightHand = character:FindFirstChild("RightHand")
+                local leftFoot = character:FindFirstChild("LeftFoot")
+                local rightFoot = character:FindFirstChild("RightFoot")
                 
                 if head and torso then
                     local headPos, headOnScreen = Camera:WorldToViewportPoint(head.Position)
                     local torsoPos, torsoOnScreen = Camera:WorldToViewportPoint(torso.Position)
                     
                     if headOnScreen and torsoOnScreen then
+                        -- Main spine (head to torso)
                         drawings.Spine.From = Vector2.new(headPos.X, headPos.Y)
                         drawings.Spine.To = Vector2.new(torsoPos.X, torsoPos.Y)
-                        drawings.Spine.Visible = ShowESP
+                        drawings.Spine.Visible = true
+                        
+                        -- Left arm chain
+                        if leftArm then
+                            local leftArmPos, leftArmOnScreen = Camera:WorldToViewportPoint(leftArm.Position)
+                            if leftArmOnScreen then
+                                drawings.LeftShoulder.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.LeftShoulder.To = Vector2.new(leftArmPos.X, leftArmPos.Y)
+                                drawings.LeftShoulder.Visible = true
+                                
+                                if leftLowerArm then
+                                    local leftLowerArmPos, leftLowerArmOnScreen = Camera:WorldToViewportPoint(leftLowerArm.Position)
+                                    if leftLowerArmOnScreen then
+                                        drawings.LeftUpperArm.From = Vector2.new(leftArmPos.X, leftArmPos.Y)
+                                        drawings.LeftUpperArm.To = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
+                                        drawings.LeftUpperArm.Visible = true
+                                        
+                                        if leftHand then
+                                            local leftHandPos, leftHandOnScreen = Camera:WorldToViewportPoint(leftHand.Position)
+                                            if leftHandOnScreen then
+                                                drawings.LeftLowerArm.From = Vector2.new(leftLowerArmPos.X, leftLowerArmPos.Y)
+                                                drawings.LeftLowerArm.To = Vector2.new(leftHandPos.X, leftHandPos.Y)
+                                                drawings.LeftLowerArm.Visible = true
+                                            end
+                                        end
+                                    end
+                                else
+                                    -- R6 compatibility - direct arm connection
+                                    drawings.LeftUpperArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                    drawings.LeftUpperArm.To = Vector2.new(leftArmPos.X, leftArmPos.Y)
+                                    drawings.LeftUpperArm.Visible = true
+                                end
+                            end
+                        end
+                        
+                        -- Right arm chain
+                        if rightArm then
+                            local rightArmPos, rightArmOnScreen = Camera:WorldToViewportPoint(rightArm.Position)
+                            if rightArmOnScreen then
+                                drawings.RightShoulder.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.RightShoulder.To = Vector2.new(rightArmPos.X, rightArmPos.Y)
+                                drawings.RightShoulder.Visible = true
+                                
+                                if rightLowerArm then
+                                    local rightLowerArmPos, rightLowerArmOnScreen = Camera:WorldToViewportPoint(rightLowerArm.Position)
+                                    if rightLowerArmOnScreen then
+                                        drawings.RightUpperArm.From = Vector2.new(rightArmPos.X, rightArmPos.Y)
+                                        drawings.RightUpperArm.To = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
+                                        drawings.RightUpperArm.Visible = true
+                                        
+                                        if rightHand then
+                                            local rightHandPos, rightHandOnScreen = Camera:WorldToViewportPoint(rightHand.Position)
+                                            if rightHandOnScreen then
+                                                drawings.RightLowerArm.From = Vector2.new(rightLowerArmPos.X, rightLowerArmPos.Y)
+                                                drawings.RightLowerArm.To = Vector2.new(rightHandPos.X, rightHandPos.Y)
+                                                drawings.RightLowerArm.Visible = true
+                                            end
+                                        end
+                                    end
+                                else
+                                    -- R6 compatibility
+                                    drawings.RightUpperArm.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                    drawings.RightUpperArm.To = Vector2.new(rightArmPos.X, rightArmPos.Y)
+                                    drawings.RightUpperArm.Visible = true
+                                end
+                            end
+                        end
+                        
+                        -- Left leg chain
+                        if leftLeg then
+                            local leftLegPos, leftLegOnScreen = Camera:WorldToViewportPoint(leftLeg.Position)
+                            if leftLegOnScreen then
+                                drawings.LeftHip.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.LeftHip.To = Vector2.new(leftLegPos.X, leftLegPos.Y)
+                                drawings.LeftHip.Visible = true
+                                
+                                if leftLowerLeg then
+                                    local leftLowerLegPos, leftLowerLegOnScreen = Camera:WorldToViewportPoint(leftLowerLeg.Position)
+                                    if leftLowerLegOnScreen then
+                                        drawings.LeftUpperLeg.From = Vector2.new(leftLegPos.X, leftLegPos.Y)
+                                        drawings.LeftUpperLeg.To = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
+                                        drawings.LeftUpperLeg.Visible = true
+                                        
+                                        if leftFoot then
+                                            local leftFootPos, leftFootOnScreen = Camera:WorldToViewportPoint(leftFoot.Position)
+                                            if leftFootOnScreen then
+                                                drawings.LeftLowerLeg.From = Vector2.new(leftLowerLegPos.X, leftLowerLegPos.Y)
+                                                drawings.LeftLowerLeg.To = Vector2.new(leftFootPos.X, leftFootPos.Y)
+                                                drawings.LeftLowerLeg.Visible = true
+                                            end
+                                        end
+                                    end
+                                else
+                                    -- R6 compatibility
+                                    drawings.LeftUpperLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                    drawings.LeftUpperLeg.To = Vector2.new(leftLegPos.X, leftLegPos.Y)
+                                    drawings.LeftUpperLeg.Visible = true
+                                end
+                            end
+                        end
+                        
+                        -- Right leg chain
+                        if rightLeg then
+                            local rightLegPos, rightLegOnScreen = Camera:WorldToViewportPoint(rightLeg.Position)
+                            if rightLegOnScreen then
+                                drawings.RightHip.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                drawings.RightHip.To = Vector2.new(rightLegPos.X, rightLegPos.Y)
+                                drawings.RightHip.Visible = true
+                                
+                                if rightLowerLeg then
+                                    local rightLowerLegPos, rightLowerLegOnScreen = Camera:WorldToViewportPoint(rightLowerLeg.Position)
+                                    if rightLowerLegOnScreen then
+                                        drawings.RightUpperLeg.From = Vector2.new(rightLegPos.X, rightLegPos.Y)
+                                        drawings.RightUpperLeg.To = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
+                                        drawings.RightUpperLeg.Visible = true
+                                        
+                                        if rightFoot then
+                                            local rightFootPos, rightFootOnScreen = Camera:WorldToViewportPoint(rightFoot.Position)
+                                            if rightFootOnScreen then
+                                                drawings.RightLowerLeg.From = Vector2.new(rightLowerLegPos.X, rightLowerLegPos.Y)
+                                                drawings.RightLowerLeg.To = Vector2.new(rightFootPos.X, rightFootPos.Y)
+                                                drawings.RightLowerLeg.Visible = true
+                                            end
+                                        end
+                                    end
+                                else
+                                    -- R6 compatibility
+                                    drawings.RightUpperLeg.From = Vector2.new(torsoPos.X, torsoPos.Y)
+                                    drawings.RightUpperLeg.To = Vector2.new(rightLegPos.X, rightLegPos.Y)
+                                    drawings.RightUpperLeg.Visible = true
+                                end
+                            end
+                        end
+                        
                     else
+                        -- Hide all if not on screen
                         for _, element in pairs(drawings) do
                             element.Visible = false
                         end
                     end
                 else
+                    -- Hide all if no head/torso
                     for _, element in pairs(drawings) do
                         element.Visible = false
                     end
                 end
             else
+                -- Hide ESP for same team
                 for _, element in pairs(drawings) do
                     element.Visible = false
                 end
             end
         else
+            -- Hide ESP for invalid players
             for _, element in pairs(drawings) do
                 element.Visible = false
             end
