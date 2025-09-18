@@ -1,0 +1,590 @@
+-- BinaryZero's Hub Script
+-- Modern Roblox Hub with Loading Screen and Auto Script Management
+-- Usage: loadstring(game:HttpGet("your_raw_url_here"))()
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Hub Configuration
+local HubConfig = {
+    HubName = "BinaryZero's Hub",
+    Version = "v1.0",
+    LoadingTime = 3, -- seconds
+    
+    -- Colors (Modern Dark Theme)
+    Colors = {
+        Primary = Color3.fromRGB(30, 30, 30),
+        Secondary = Color3.fromRGB(45, 45, 45),
+        Accent = Color3.fromRGB(0, 162, 255),
+        Text = Color3.fromRGB(255, 255, 255),
+        TextSecondary = Color3.fromRGB(180, 180, 180),
+        Success = Color3.fromRGB(46, 204, 113),
+        Warning = Color3.fromRGB(241, 196, 15),
+        Error = Color3.fromRGB(231, 76, 60)
+    }
+}
+
+-- Script Database - Add your scripts here
+local ScriptDatabase = {
+    {
+        name = "Infinite Yield",
+        description = "Advanced admin commands script",
+        category = "Admin",
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))())'
+    },
+    {
+        name = "Dark Dex",
+        description = "Advanced explorer for Roblox",
+        category = "Exploit",
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/main/Universal/BypassedDarkDexV3.lua", true))()'
+    },
+    {
+        name = "Simple Spy",
+        description = "Remote spy for debugging",
+        category = "Debug",
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()'
+    },
+    {
+        name = "Unnamed ESP",
+        description = "Universal ESP script",
+        category = "Visual",
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua"))()'
+    }
+}
+
+-- Utility Functions
+local function createTweenInfo(time, style, direction, repeatCount, reverses, delayTime)
+    return TweenInfo.new(
+        time or 0.3,
+        style or Enum.EasingStyle.Quad,
+        direction or Enum.EasingDirection.Out,
+        repeatCount or 0,
+        reverses or false,
+        delayTime or 0
+    )
+end
+
+local function createCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 8)
+    corner.Parent = parent
+    return corner
+end
+
+local function createGradient(parent, color1, color2, rotation)
+    local gradient = Instance.new("UIGradient")
+    gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, color1),
+        ColorSequenceKeypoint.new(1, color2)
+    }
+    gradient.Rotation = rotation or 0
+    gradient.Parent = parent
+    return gradient
+end
+
+-- Main Hub Class
+local BinaryZeroHub = {}
+BinaryZeroHub.__index = BinaryZeroHub
+
+function BinaryZeroHub.new()
+    local self = setmetatable({}, BinaryZeroHub)
+    
+    self.gui = nil
+    self.loadingFrame = nil
+    self.mainFrame = nil
+    self.scriptFrames = {}
+    self.filteredScripts = ScriptDatabase
+    
+    self:init()
+    return self
+end
+
+function BinaryZeroHub:init()
+    -- Remove existing hub if it exists
+    if playerGui:FindFirstChild("BinaryZeroHub") then
+        playerGui:FindFirstChild("BinaryZeroHub"):Destroy()
+    end
+    
+    self:createMainGui()
+    self:createLoadingScreen()
+    self:startLoading()
+end
+
+function BinaryZeroHub:createMainGui()
+    -- Main ScreenGui
+    self.gui = Instance.new("ScreenGui")
+    self.gui.Name = "BinaryZeroHub"
+    self.gui.ResetOnSpawn = false
+    self.gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    self.gui.Parent = playerGui
+end
+
+function BinaryZeroHub:createLoadingScreen()
+    -- Loading Frame
+    self.loadingFrame = Instance.new("Frame")
+    self.loadingFrame.Name = "LoadingFrame"
+    self.loadingFrame.Size = UDim2.new(1, 0, 1, 0)
+    self.loadingFrame.Position = UDim2.new(0, 0, 0, 0)
+    self.loadingFrame.BackgroundColor3 = HubConfig.Colors.Primary
+    self.loadingFrame.BorderSizePixel = 0
+    self.loadingFrame.Parent = self.gui
+    
+    -- Loading Background Gradient
+    createGradient(self.loadingFrame, HubConfig.Colors.Primary, HubConfig.Colors.Secondary, 45)
+    
+    -- Loading Container
+    local loadingContainer = Instance.new("Frame")
+    loadingContainer.Name = "LoadingContainer"
+    loadingContainer.Size = UDim2.new(0, 400, 0, 200)
+    loadingContainer.Position = UDim2.new(0.5, -200, 0.5, -100)
+    loadingContainer.BackgroundTransparency = 1
+    loadingContainer.Parent = self.loadingFrame
+    
+    -- Hub Title
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Size = UDim2.new(1, 0, 0, 60)
+    titleLabel.Position = UDim2.new(0, 0, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "Loading " .. HubConfig.HubName
+    titleLabel.TextColor3 = HubConfig.Colors.Text
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Parent = loadingContainer
+    
+    -- Loading Bar Background
+    local loadingBarBg = Instance.new("Frame")
+    loadingBarBg.Name = "LoadingBarBackground"
+    loadingBarBg.Size = UDim2.new(1, 0, 0, 8)
+    loadingBarBg.Position = UDim2.new(0, 0, 0, 100)
+    loadingBarBg.BackgroundColor3 = HubConfig.Colors.Secondary
+    loadingBarBg.BorderSizePixel = 0
+    loadingBarBg.Parent = loadingContainer
+    createCorner(loadingBarBg, 4)
+    
+    -- Loading Bar
+    local loadingBar = Instance.new("Frame")
+    loadingBar.Name = "LoadingBar"
+    loadingBar.Size = UDim2.new(0, 0, 1, 0)
+    loadingBar.Position = UDim2.new(0, 0, 0, 0)
+    loadingBar.BackgroundColor3 = HubConfig.Colors.Accent
+    loadingBar.BorderSizePixel = 0
+    loadingBar.Parent = loadingBarBg
+    createCorner(loadingBar, 4)
+    
+    -- Loading Text
+    local loadingText = Instance.new("TextLabel")
+    loadingText.Name = "LoadingText"
+    loadingText.Size = UDim2.new(1, 0, 0, 30)
+    loadingText.Position = UDim2.new(0, 0, 0, 130)
+    loadingText.BackgroundTransparency = 1
+    loadingText.Text = "Initializing..."
+    loadingText.TextColor3 = HubConfig.Colors.TextSecondary
+    loadingText.TextScaled = true
+    loadingText.Font = Enum.Font.Gotham
+    loadingText.Parent = loadingContainer
+    
+    self.loadingBar = loadingBar
+    self.loadingText = loadingText
+end
+
+function BinaryZeroHub:startLoading()
+    local loadingSteps = {
+        "Initializing...",
+        "Loading scripts...",
+        "Setting up interface...",
+        "Finalizing..."
+    }
+    
+    local stepDuration = HubConfig.LoadingTime / #loadingSteps
+    
+    for i, step in ipairs(loadingSteps) do
+        wait(stepDuration)
+        
+        -- Update loading text
+        self.loadingText.Text = step
+        
+        -- Update loading bar
+        local targetSize = UDim2.new(i / #loadingSteps, 0, 1, 0)
+        local tween = TweenService:Create(
+            self.loadingBar,
+            createTweenInfo(stepDuration * 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            {Size = targetSize}
+        )
+        tween:Play()
+    end
+    
+    wait(0.5)
+    self:transitionToMain()
+end
+
+function BinaryZeroHub:transitionToMain()
+    -- Create main interface
+    self:createMainInterface()
+    
+    -- Fade out loading screen
+    local fadeOutTween = TweenService:Create(
+        self.loadingFrame,
+        createTweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 1}
+    )
+    
+    fadeOutTween:Play()
+    fadeOutTween.Completed:Connect(function()
+        self.loadingFrame:Destroy()
+    end)
+    
+    -- Fade in main frame
+    self.mainFrame.BackgroundTransparency = 1
+    local fadeInTween = TweenService:Create(
+        self.mainFrame,
+        createTweenInfo(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        {BackgroundTransparency = 0}
+    )
+    fadeInTween:Play()
+end
+
+function BinaryZeroHub:createMainInterface()
+    -- Main Frame
+    self.mainFrame = Instance.new("Frame")
+    self.mainFrame.Name = "MainFrame"
+    self.mainFrame.Size = UDim2.new(0, 800, 0, 600)
+    self.mainFrame.Position = UDim2.new(0.5, -400, 0.5, -300)
+    self.mainFrame.BackgroundColor3 = HubConfig.Colors.Primary
+    self.mainFrame.BorderSizePixel = 0
+    self.mainFrame.Parent = self.gui
+    createCorner(self.mainFrame, 12)
+    
+    -- Main Frame Shadow
+    local shadow = Instance.new("Frame")
+    shadow.Name = "Shadow"
+    shadow.Size = UDim2.new(1, 20, 1, 20)
+    shadow.Position = UDim2.new(0, -10, 0, -10)
+    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.BackgroundTransparency = 0.8
+    shadow.BorderSizePixel = 0
+    shadow.ZIndex = self.mainFrame.ZIndex - 1
+    shadow.Parent = self.mainFrame
+    createCorner(shadow, 12)
+    
+    -- Header
+    self:createHeader()
+    
+    -- Search Bar
+    self:createSearchBar()
+    
+    -- Scripts Container
+    self:createScriptsContainer()
+    
+    -- Populate scripts
+    self:populateScripts()
+    
+    -- Make draggable
+    self:makeDraggable()
+end
+
+function BinaryZeroHub:createHeader()
+    local header = Instance.new("Frame")
+    header.Name = "Header"
+    header.Size = UDim2.new(1, 0, 0, 60)
+    header.Position = UDim2.new(0, 0, 0, 0)
+    header.BackgroundColor3 = HubConfig.Colors.Secondary
+    header.BorderSizePixel = 0
+    header.Parent = self.mainFrame
+    createCorner(header, 12)
+    
+    -- Header gradient
+    createGradient(header, HubConfig.Colors.Secondary, HubConfig.Colors.Accent, 90)
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Size = UDim2.new(0, 300, 1, 0)
+    title.Position = UDim2.new(0, 20, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = HubConfig.HubName
+    title.TextColor3 = HubConfig.Colors.Text
+    title.TextScaled = true
+    title.Font = Enum.Font.GothamBold
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = header
+    
+    -- Version
+    local version = Instance.new("TextLabel")
+    version.Name = "Version"
+    version.Size = UDim2.new(0, 100, 0, 20)
+    version.Position = UDim2.new(0, 320, 0, 20)
+    version.BackgroundTransparency = 1
+    version.Text = HubConfig.Version
+    version.TextColor3 = HubConfig.Colors.TextSecondary
+    version.TextScaled = true
+    version.Font = Enum.Font.Gotham
+    version.TextXAlignment = Enum.TextXAlignment.Left
+    version.Parent = header
+    
+    -- Close Button
+    local closeButton = Instance.new("TextButton")
+    closeButton.Name = "CloseButton"
+    closeButton.Size = UDim2.new(0, 40, 0, 40)
+    closeButton.Position = UDim2.new(1, -50, 0, 10)
+    closeButton.BackgroundColor3 = HubConfig.Colors.Error
+    closeButton.BorderSizePixel = 0
+    closeButton.Text = "×"
+    closeButton.TextColor3 = HubConfig.Colors.Text
+    closeButton.TextScaled = true
+    closeButton.Font = Enum.Font.GothamBold
+    closeButton.Parent = header
+    createCorner(closeButton, 20)
+    
+    closeButton.MouseButton1Click:Connect(function()
+        self:closeHub()
+    end)
+end
+
+function BinaryZeroHub:createSearchBar()
+    local searchContainer = Instance.new("Frame")
+    searchContainer.Name = "SearchContainer"
+    searchContainer.Size = UDim2.new(1, -40, 0, 50)
+    searchContainer.Position = UDim2.new(0, 20, 0, 80)
+    searchContainer.BackgroundTransparency = 1
+    searchContainer.Parent = self.mainFrame
+    
+    local searchBox = Instance.new("TextBox")
+    searchBox.Name = "SearchBox"
+    searchBox.Size = UDim2.new(1, 0, 1, 0)
+    searchBox.Position = UDim2.new(0, 0, 0, 0)
+    searchBox.BackgroundColor3 = HubConfig.Colors.Secondary
+    searchBox.BorderSizePixel = 0
+    searchBox.PlaceholderText = "Search scripts..."
+    searchBox.PlaceholderColor3 = HubConfig.Colors.TextSecondary
+    searchBox.Text = ""
+    searchBox.TextColor3 = HubConfig.Colors.Text
+    searchBox.TextScaled = true
+    searchBox.Font = Enum.Font.Gotham
+    searchBox.Parent = searchContainer
+    createCorner(searchBox, 8)
+    
+    -- Search functionality
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        self:filterScripts(searchBox.Text)
+    end)
+    
+    self.searchBox = searchBox
+end
+
+function BinaryZeroHub:createScriptsContainer()
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = "ScriptsContainer"
+    scrollFrame.Size = UDim2.new(1, -40, 1, -160)
+    scrollFrame.Position = UDim2.new(0, 20, 0, 140)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.BorderSizePixel = 0
+    scrollFrame.ScrollBarThickness = 8
+    scrollFrame.ScrollBarImageColor3 = HubConfig.Colors.Accent
+    scrollFrame.Parent = self.mainFrame
+    
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Padding = UDim.new(0, 10)
+    listLayout.Parent = scrollFrame
+    
+    self.scriptsContainer = scrollFrame
+end
+
+function BinaryZeroHub:populateScripts()
+    -- Clear existing script frames
+    for _, frame in pairs(self.scriptFrames) do
+        frame:Destroy()
+    end
+    self.scriptFrames = {}
+    
+    -- Create script frames
+    for i, script in ipairs(self.filteredScripts) do
+        local scriptFrame = self:createScriptFrame(script, i)
+        table.insert(self.scriptFrames, scriptFrame)
+    end
+    
+    -- Update canvas size
+    self.scriptsContainer.CanvasSize = UDim2.new(0, 0, 0, #self.filteredScripts * 80 + (#self.filteredScripts - 1) * 10)
+end
+
+function BinaryZeroHub:createScriptFrame(scriptData, index)
+    local frame = Instance.new("Frame")
+    frame.Name = "ScriptFrame_" .. index
+    frame.Size = UDim2.new(1, 0, 0, 70)
+    frame.BackgroundColor3 = HubConfig.Colors.Secondary
+    frame.BorderSizePixel = 0
+    frame.LayoutOrder = index
+    frame.Parent = self.scriptsContainer
+    createCorner(frame, 8)
+    
+    -- Script Info
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "NameLabel"
+    nameLabel.Size = UDim2.new(0, 300, 0, 25)
+    nameLabel.Position = UDim2.new(0, 15, 0, 10)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = scriptData.name
+    nameLabel.TextColor3 = HubConfig.Colors.Text
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+    nameLabel.Parent = frame
+    
+    local descLabel = Instance.new("TextLabel")
+    descLabel.Name = "DescLabel"
+    descLabel.Size = UDim2.new(0, 400, 0, 20)
+    descLabel.Position = UDim2.new(0, 15, 0, 35)
+    descLabel.BackgroundTransparency = 1
+    descLabel.Text = scriptData.description
+    descLabel.TextColor3 = HubConfig.Colors.TextSecondary
+    descLabel.TextScaled = true
+    descLabel.Font = Enum.Font.Gotham
+    descLabel.TextXAlignment = Enum.TextXAlignment.Left
+    descLabel.Parent = frame
+    
+    -- Category Badge
+    local categoryBadge = Instance.new("Frame")
+    categoryBadge.Name = "CategoryBadge"
+    categoryBadge.Size = UDim2.new(0, 80, 0, 25)
+    categoryBadge.Position = UDim2.new(0, 320, 0, 10)
+    categoryBadge.BackgroundColor3 = HubConfig.Colors.Accent
+    categoryBadge.BorderSizePixel = 0
+    categoryBadge.Parent = frame
+    createCorner(categoryBadge, 12)
+    
+    local categoryLabel = Instance.new("TextLabel")
+    categoryLabel.Size = UDim2.new(1, 0, 1, 0)
+    categoryLabel.BackgroundTransparency = 1
+    categoryLabel.Text = scriptData.category
+    categoryLabel.TextColor3 = HubConfig.Colors.Text
+    categoryLabel.TextScaled = true
+    categoryLabel.Font = Enum.Font.Gotham
+    categoryLabel.Parent = categoryBadge
+    
+    -- Execute Button
+    local executeButton = Instance.new("TextButton")
+    executeButton.Name = "ExecuteButton"
+    executeButton.Size = UDim2.new(0, 100, 0, 35)
+    executeButton.Position = UDim2.new(1, -115, 0, 17.5)
+    executeButton.BackgroundColor3 = HubConfig.Colors.Success
+    executeButton.BorderSizePixel = 0
+    executeButton.Text = "Execute"
+    executeButton.TextColor3 = HubConfig.Colors.Text
+    executeButton.TextScaled = true
+    executeButton.Font = Enum.Font.GothamBold
+    executeButton.Parent = frame
+    createCorner(executeButton, 8)
+    
+    -- Button hover effect
+    executeButton.MouseEnter:Connect(function()
+        local tween = TweenService:Create(
+            executeButton,
+            createTweenInfo(0.2),
+            {BackgroundColor3 = Color3.fromRGB(52, 224, 133)}
+        )
+        tween:Play()
+    end)
+    
+    executeButton.MouseLeave:Connect(function()
+        local tween = TweenService:Create(
+            executeButton,
+            createTweenInfo(0.2),
+            {BackgroundColor3 = HubConfig.Colors.Success}
+        )
+        tween:Play()
+    end)
+    
+    -- Execute script
+    executeButton.MouseButton1Click:Connect(function()
+        self:executeScript(scriptData)
+    end)
+    
+    return frame
+end
+
+function BinaryZeroHub:filterScripts(searchText)
+    if searchText == "" then
+        self.filteredScripts = ScriptDatabase
+    else
+        self.filteredScripts = {}
+        local lowerSearch = string.lower(searchText)
+        
+        for _, script in ipairs(ScriptDatabase) do
+            if string.find(string.lower(script.name), lowerSearch) or 
+               string.find(string.lower(script.description), lowerSearch) or
+               string.find(string.lower(script.category), lowerSearch) then
+                table.insert(self.filteredScripts, script)
+            end
+        end
+    end
+    
+    self:populateScripts()
+end
+
+function BinaryZeroHub:executeScript(scriptData)
+    local success, error = pcall(function()
+        loadstring(scriptData.loadstring)()
+    end)
+    
+    if not success then
+        warn("Failed to execute " .. scriptData.name .. ": " .. tostring(error))
+    end
+end
+
+function BinaryZeroHub:makeDraggable()
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        self.mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    self.mainFrame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = self.mainFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    self.mainFrame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            if dragging then
+                update(input)
+            end
+        end
+    end)
+end
+
+function BinaryZeroHub:closeHub()
+    local closeTween = TweenService:Create(
+        self.mainFrame,
+        createTweenInfo(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+        {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}
+    )
+    
+    closeTween:Play()
+    closeTween.Completed:Connect(function()
+        self.gui:Destroy()
+    end)
+end
+
+-- Initialize Hub
+local hub = BinaryZeroHub.new()
+
+-- Return hub instance for external access
+return hub
