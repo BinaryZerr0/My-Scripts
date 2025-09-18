@@ -1,3 +1,7 @@
+-- BinaryZero's Hub Script
+-- Modern Roblox Hub with Loading Screen and Auto Script Management
+-- Usage: loadstring(game:HttpGet("your_raw_url_here"))()
+
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -28,28 +32,129 @@ local HubConfig = {
 -- Script Database - Add your scripts here
 local ScriptDatabase = {
     {
-        name = "BIG Paintball 2!",
+        name = "Infinite Yield",
         description = "Advanced admin commands script",
-        category = "Script",
-        loadstring = 'loadstring(game:HttpGet"https://raw.githubusercontent.com/SquidGurr/My-Scripts/refs/heads/main/My%20Keyless%20Big%20Paintball%202%20Script")()'
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))())'
     },
     {
-        name = "FNAF TPRR",
+        name = "Dark Dex",
         description = "Advanced explorer for Roblox",
-        category = "Script",
-        loadstring = 'loadstring(game:HttpGet"https://raw.githubusercontent.com/SquidGurr/My-Scripts/refs/heads/main/My%20Keyless%20FNAF%20TPRR%20Script")()'
+        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/main/Universal/BypassedDarkDexV3.lua", true))()'
     },
     {
         name = "Simple Spy",
         description = "Remote spy for debugging",
-        category = "Script",
         loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()'
     },
     {
         name = "Unnamed ESP",
         description = "Universal ESP script",
-        category = "Script",
         loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua"))()'
+    },
+    {
+        name = "Universal Fly",
+        description = "Fly script with F key toggle",
+        loadstring = [[
+            local Players = game:GetService("Players")
+            local UserInputService = game:GetService("UserInputService")
+            local player = Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild("Humanoid")
+            local rootPart = character:WaitForChild("HumanoidRootPart")
+            
+            local flying = false
+            local speed = 50
+            local bodyVelocity
+            
+            local function startFlying()
+                flying = true
+                bodyVelocity = Instance.new("BodyVelocity")
+                bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+                bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                bodyVelocity.Parent = rootPart
+                humanoid.PlatformStand = true
+            end
+            
+            local function stopFlying()
+                flying = false
+                if bodyVelocity then bodyVelocity:Destroy() end
+                humanoid.PlatformStand = false
+            end
+            
+            UserInputService.InputBegan:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.F then
+                    if flying then stopFlying() else startFlying() end
+                end
+            end)
+            
+            game:GetService("RunService").Heartbeat:Connect(function()
+                if flying and bodyVelocity then
+                    local camera = workspace.CurrentCamera
+                    local direction = Vector3.new(0, 0, 0)
+                    if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - camera.CFrame.LookVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - camera.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + camera.CFrame.RightVector end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+                    if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+                    bodyVelocity.Velocity = direction * speed
+                end
+            end)
+            print("Fly script loaded! Press F to toggle flying.")
+        ]]
+    },
+    {
+        name = "Speed Hack",
+        description = "Walkspeed and jumppower modifier",
+        loadstring = [[
+            local Players = game:GetService("Players")
+            local player = Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild("Humanoid")
+            humanoid.WalkSpeed = 100
+            humanoid.JumpPower = 100
+            print("Speed hack activated! WalkSpeed: 100, JumpPower: 100")
+        ]]
+    },
+    {
+        name = "Noclip Toggle",
+        description = "Toggle noclip with N key",
+        loadstring = [[
+            local Players = game:GetService("Players")
+            local UserInputService = game:GetService("UserInputService")
+            local RunService = game:GetService("RunService")
+            local player = Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local noclipping = false
+            local connection
+            
+            local function noclip()
+                for _, part in pairs(character:GetDescendants()) do
+                    if part:IsA("BasePart") and part.CanCollide then
+                        part.CanCollide = false
+                    end
+                end
+            end
+            
+            local function toggleNoclip()
+                noclipping = not noclipping
+                if noclipping then
+                    connection = RunService.Stepped:Connect(noclip)
+                    print("Noclip enabled")
+                else
+                    if connection then connection:Disconnect() end
+                    for _, part in pairs(character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide = true end
+                    end
+                    print("Noclip disabled")
+                end
+            end
+            
+            UserInputService.InputBegan:Connect(function(input)
+                if input.KeyCode == Enum.KeyCode.N then toggleNoclip() end
+            end)
+            print("Noclip script loaded! Press N to toggle.")
+        ]]
     }
 }
 
@@ -95,8 +200,12 @@ function BinaryZeroHub.new()
     self.mainFrame = nil
     self.scriptFrames = {}
     self.filteredScripts = ScriptDatabase
+    self.isVisible = true
+    self.minSize = {width = 600, height = 400}
+    self.maxSize = {width = 1200, height = 800}
     
     self:init()
+    self:setupToggleKey()
     return self
 end
 
@@ -121,14 +230,15 @@ function BinaryZeroHub:createMainGui()
 end
 
 function BinaryZeroHub:createLoadingScreen()
-    -- Loading Frame
+    -- Loading Frame (smaller and centered)
     self.loadingFrame = Instance.new("Frame")
     self.loadingFrame.Name = "LoadingFrame"
-    self.loadingFrame.Size = UDim2.new(1, 0, 1, 0)
-    self.loadingFrame.Position = UDim2.new(0, 0, 0, 0)
+    self.loadingFrame.Size = UDim2.new(0, 350, 0, 150)
+    self.loadingFrame.Position = UDim2.new(0.5, -175, 0.5, -75)
     self.loadingFrame.BackgroundColor3 = HubConfig.Colors.Primary
     self.loadingFrame.BorderSizePixel = 0
     self.loadingFrame.Parent = self.gui
+    createCorner(self.loadingFrame, 12)
     
     -- Loading Background Gradient
     createGradient(self.loadingFrame, HubConfig.Colors.Primary, HubConfig.Colors.Secondary, 45)
@@ -136,15 +246,15 @@ function BinaryZeroHub:createLoadingScreen()
     -- Loading Container
     local loadingContainer = Instance.new("Frame")
     loadingContainer.Name = "LoadingContainer"
-    loadingContainer.Size = UDim2.new(0, 400, 0, 200)
-    loadingContainer.Position = UDim2.new(0.5, -200, 0.5, -100)
+    loadingContainer.Size = UDim2.new(1, -40, 1, -40)
+    loadingContainer.Position = UDim2.new(0, 20, 0, 20)
     loadingContainer.BackgroundTransparency = 1
     loadingContainer.Parent = self.loadingFrame
     
     -- Hub Title
     local titleLabel = Instance.new("TextLabel")
     titleLabel.Name = "TitleLabel"
-    titleLabel.Size = UDim2.new(1, 0, 0, 60)
+    titleLabel.Size = UDim2.new(1, 0, 0, 40)
     titleLabel.Position = UDim2.new(0, 0, 0, 0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = "Loading " .. HubConfig.HubName
@@ -156,12 +266,12 @@ function BinaryZeroHub:createLoadingScreen()
     -- Loading Bar Background
     local loadingBarBg = Instance.new("Frame")
     loadingBarBg.Name = "LoadingBarBackground"
-    loadingBarBg.Size = UDim2.new(1, 0, 0, 8)
-    loadingBarBg.Position = UDim2.new(0, 0, 0, 100)
+    loadingBarBg.Size = UDim2.new(1, 0, 0, 6)
+    loadingBarBg.Position = UDim2.new(0, 0, 0, 60)
     loadingBarBg.BackgroundColor3 = HubConfig.Colors.Secondary
     loadingBarBg.BorderSizePixel = 0
     loadingBarBg.Parent = loadingContainer
-    createCorner(loadingBarBg, 4)
+    createCorner(loadingBarBg, 3)
     
     -- Loading Bar
     local loadingBar = Instance.new("Frame")
@@ -171,13 +281,13 @@ function BinaryZeroHub:createLoadingScreen()
     loadingBar.BackgroundColor3 = HubConfig.Colors.Accent
     loadingBar.BorderSizePixel = 0
     loadingBar.Parent = loadingBarBg
-    createCorner(loadingBar, 4)
+    createCorner(loadingBar, 3)
     
     -- Loading Text
     local loadingText = Instance.new("TextLabel")
     loadingText.Name = "LoadingText"
-    loadingText.Size = UDim2.new(1, 0, 0, 30)
-    loadingText.Position = UDim2.new(0, 0, 0, 130)
+    loadingText.Size = UDim2.new(1, 0, 0, 25)
+    loadingText.Position = UDim2.new(0, 0, 0, 80)
     loadingText.BackgroundTransparency = 1
     loadingText.Text = "Initializing..."
     loadingText.TextColor3 = HubConfig.Colors.TextSecondary
@@ -246,7 +356,7 @@ function BinaryZeroHub:transitionToMain()
 end
 
 function BinaryZeroHub:createMainInterface()
-    -- Main Frame
+    -- Main Frame (resizable)
     self.mainFrame = Instance.new("Frame")
     self.mainFrame.Name = "MainFrame"
     self.mainFrame.Size = UDim2.new(0, 800, 0, 600)
@@ -280,8 +390,9 @@ function BinaryZeroHub:createMainInterface()
     -- Populate scripts
     self:populateScripts()
     
-    -- Make draggable
+    -- Make draggable and resizable
     self:makeDraggable()
+    self:makeResizable()
 end
 
 function BinaryZeroHub:createHeader()
@@ -444,26 +555,7 @@ function BinaryZeroHub:createScriptFrame(scriptData, index)
     descLabel.TextXAlignment = Enum.TextXAlignment.Left
     descLabel.Parent = frame
     
-    -- Category Badge
-    local categoryBadge = Instance.new("Frame")
-    categoryBadge.Name = "CategoryBadge"
-    categoryBadge.Size = UDim2.new(0, 80, 0, 25)
-    categoryBadge.Position = UDim2.new(0, 320, 0, 10)
-    categoryBadge.BackgroundColor3 = HubConfig.Colors.Accent
-    categoryBadge.BorderSizePixel = 0
-    categoryBadge.Parent = frame
-    createCorner(categoryBadge, 12)
-    
-    local categoryLabel = Instance.new("TextLabel")
-    categoryLabel.Size = UDim2.new(1, 0, 1, 0)
-    categoryLabel.BackgroundTransparency = 1
-    categoryLabel.Text = scriptData.category
-    categoryLabel.TextColor3 = HubConfig.Colors.Text
-    categoryLabel.TextScaled = true
-    categoryLabel.Font = Enum.Font.Gotham
-    categoryLabel.Parent = categoryBadge
-    
-    -- Execute Button
+    -- Execute Button (moved to where category badge was)
     local executeButton = Instance.new("TextButton")
     executeButton.Name = "ExecuteButton"
     executeButton.Size = UDim2.new(0, 100, 0, 35)
@@ -513,8 +605,7 @@ function BinaryZeroHub:filterScripts(searchText)
         
         for _, script in ipairs(ScriptDatabase) do
             if string.find(string.lower(script.name), lowerSearch) or 
-               string.find(string.lower(script.description), lowerSearch) or
-               string.find(string.lower(script.category), lowerSearch) then
+               string.find(string.lower(script.description), lowerSearch) then
                 table.insert(self.filteredScripts, script)
             end
         end
@@ -566,6 +657,125 @@ function BinaryZeroHub:makeDraggable()
     end)
 end
 
+function BinaryZeroHub:setupToggleKey()
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        
+        if input.KeyCode == Enum.KeyCode.RightShift then
+            self:toggleHub()
+        end
+    end)
+end
+
+function BinaryZeroHub:toggleHub()
+    if not self.mainFrame then return end
+    
+    self.isVisible = not self.isVisible
+    
+    if self.isVisible then
+        -- Show hub
+        self.mainFrame.Visible = true
+        local showTween = TweenService:Create(
+            self.mainFrame,
+            createTweenInfo(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+            {Size = UDim2.new(0, 800, 0, 600)}
+        )
+        showTween:Play()
+    else
+        -- Hide hub
+        local hideTween = TweenService:Create(
+            self.mainFrame,
+            createTweenInfo(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In),
+            {Size = UDim2.new(0, 0, 0, 0)}
+        )
+        hideTween:Play()
+        hideTween.Completed:Connect(function()
+            self.mainFrame.Visible = false
+        end)
+    end
+end
+
+function BinaryZeroHub:makeResizable()
+    -- Create resize handle in bottom-right corner
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.Size = UDim2.new(0, 20, 0, 20)
+    resizeHandle.Position = UDim2.new(1, -20, 1, -20)
+    resizeHandle.BackgroundColor3 = HubConfig.Colors.Accent
+    resizeHandle.BorderSizePixel = 0
+    resizeHandle.Parent = self.mainFrame
+    createCorner(resizeHandle, 10)
+    
+    -- Add resize icon
+    local resizeIcon = Instance.new("TextLabel")
+    resizeIcon.Size = UDim2.new(1, 0, 1, 0)
+    resizeIcon.BackgroundTransparency = 1
+    resizeIcon.Text = "⟲"
+    resizeIcon.TextColor3 = HubConfig.Colors.Text
+    resizeIcon.TextScaled = true
+    resizeIcon.Font = Enum.Font.GothamBold
+    resizeIcon.Parent = resizeHandle
+    
+    -- Resize functionality
+    local resizing = false
+    local resizeStart = nil
+    local startSize = nil
+    
+    local function updateResize(input)
+        if not resizing then return end
+        
+        local delta = input.Position - resizeStart
+        local newWidth = math.max(self.minSize.width, math.min(self.maxSize.width, startSize.X.Offset + delta.X))
+        local newHeight = math.max(self.minSize.height, math.min(self.maxSize.height, startSize.Y.Offset + delta.Y))
+        
+        self.mainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        
+        -- Update canvas size for scripts container
+        if self.scriptsContainer then
+            self.scriptsContainer.CanvasSize = UDim2.new(0, 0, 0, #self.filteredScripts * 80 + (#self.filteredScripts - 1) * 10)
+        end
+    end
+    
+    resizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            resizing = true
+            resizeStart = input.Position
+            startSize = self.mainFrame.Size
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
+    
+    resizeHandle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateResize(input)
+        end
+    end)
+    
+    -- Hover effect for resize handle
+    resizeHandle.MouseEnter:Connect(function()
+        local tween = TweenService:Create(
+            resizeHandle,
+            createTweenInfo(0.2),
+            {BackgroundColor3 = Color3.fromRGB(20, 182, 255)}
+        )
+        tween:Play()
+    end)
+    
+    resizeHandle.MouseLeave:Connect(function()
+        local tween = TweenService:Create(
+            resizeHandle,
+            createTweenInfo(0.2),
+            {BackgroundColor3 = HubConfig.Colors.Accent}
+        )
+        tween:Play()
+    end)
+end
+
 function BinaryZeroHub:closeHub()
     local closeTween = TweenService:Create(
         self.mainFrame,
@@ -581,6 +791,9 @@ end
 
 -- Initialize Hub
 local hub = BinaryZeroHub.new()
+
+-- Print instructions
+print("BinaryZero's Hub loaded! Press RightShift to toggle the hub.")
 
 -- Return hub instance for external access
 return hub
