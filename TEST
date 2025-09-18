@@ -1,7 +1,3 @@
--- BinaryZero's Hub Script
--- Modern Roblox Hub with Loading Screen and Auto Script Management
--- Usage: loadstring(game:HttpGet("your_raw_url_here"))()
-
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -32,27 +28,27 @@ local HubConfig = {
 -- Script Database - Add your scripts here
 local ScriptDatabase = {
     {
-        name = "Infinite Yield",
+        name = "BIG Paintball 2!",
         description = "Advanced admin commands script",
-        category = "Admin",
-        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))())'
+        category = "Script",
+        loadstring = 'loadstring(game:HttpGet"https://raw.githubusercontent.com/SquidGurr/My-Scripts/refs/heads/main/My%20Keyless%20Big%20Paintball%202%20Script")()'
     },
     {
-        name = "Dark Dex",
+        name = "FNAF TPRR",
         description = "Advanced explorer for Roblox",
-        category = "Exploit",
-        loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/main/Universal/BypassedDarkDexV3.lua", true))()'
+        category = "Script",
+        loadstring = 'loadstring(game:HttpGet"https://raw.githubusercontent.com/SquidGurr/My-Scripts/refs/heads/main/My%20Keyless%20FNAF%20TPRR%20Script")()'
     },
     {
         name = "Simple Spy",
         description = "Remote spy for debugging",
-        category = "Debug",
+        category = "Script",
         loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))()'
     },
     {
         name = "Unnamed ESP",
         description = "Universal ESP script",
-        category = "Visual",
+        category = "Script",
         loadstring = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ic3w0lf22/Unnamed-ESP/master/UnnamedESP.lua"))()'
     }
 }
