@@ -1,0 +1,100 @@
+local replicated_storage = game:GetService("ReplicatedStorage")
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+local camera = workspace.CurrentCamera
+local events = replicated_storage.Events
+
+getgenv().we_ud = not getgenv().we_ud
+if not getgenv().we_ud then 
+    return 
+end
+
+events.Chat:FireServer(string.rep("\n", 50) .. " Chat is broken due to an unknown bug, sorry!")
+
+local playerTeam = localPlayer.Team
+local shootEvent = events.Shoot
+local renderConnection
+
+renderConnection = game:GetService("RunService").RenderStepped:Connect(function()
+    if not getgenv().we_ud then
+        renderConnection:Disconnect()
+        return
+    end
+    
+    local cameraArms = camera:FindFirstChild("Arms")
+    if not cameraArms then 
+        return
+    end
+    
+    local equippedTool = cameraArms:FindFirstChildWhichIsA("Model")
+    if not equippedTool then 
+        return
+    end
+    
+    local weaponName = equippedTool.Name
+    
+    for i, targetPlayer in pairs(players:GetPlayers()) do
+        if targetPlayer == localPlayer then 
+            continue 
+        end
+        if targetPlayer.Team == playerTeam then 
+            continue 
+        end
+        
+        local targetCharacter = targetPlayer.Character
+        if not targetCharacter then 
+            continue
+        end
+        
+        if targetCharacter:GetAttribute("SpawnProtection") then 
+            continue 
+        end
+        
+        local targetHumanoid = targetCharacter:FindFirstChild("Humanoid")
+        local targetHead = targetCharacter:FindFirstChild("Head")
+        
+        if not targetHead then continue end
+        if not targetHumanoid then continue end
+        if targetHumanoid.Health <= 0 then continue end
+        
+        local headPosition = targetHead.Position
+        local currentHealth = targetHumanoid.Health
+        
+        shootEvent:FireServer({
+            {
+                "BulletHit",
+                {{
+                    HitPlr = targetPlayer,
+                    HitPart = targetHead,
+                    Extras = {
+                        Equipment = false,
+                        HitNorm = Vector3.new(0, 0, 0),
+                        Melee = true,
+                        Origin = headPosition
+                    },
+                    Damage = currentHealth,
+                    Type = "Equipment",
+                    Melee = false,
+                    Aiming = {true, true},
+                    NumberCol = 0,
+                    StartPos = headPosition,
+                    HitPos = headPosition,
+                    HitHuman = targetHumanoid,
+                    AblazeChance = 0,
+                    Killed = true,
+                    PlayerPos = headPosition,
+                    DidWallb = true,
+                    DidRico = true,
+                    ClientHRPPos = headPosition,
+                    Weapon = weaponName
+                }},
+                {
+                    Aiming = true,
+                    QuickAimed = true,
+                    Equipped = "Melee",
+                    Pos = headPosition
+                }
+            }
+        })
+    end
+end)
