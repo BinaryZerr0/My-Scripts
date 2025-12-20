@@ -194,7 +194,7 @@ end
 
 local function createCoastingUI()
     if not CoastingLibrary then
-        CoastingLibrary = loadstring(game:HttpGet("https://pastebin.com/raw/3gQQtaKX"))()
+        CoastingLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/UI-Librarys/main/(Sexy)%20Coasting%20UI%20Lib"))()
     end
 
     local mainTab = CoastingLibrary:CreateTab("FNaF Auto Farm")
