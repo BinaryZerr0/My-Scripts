@@ -39,20 +39,21 @@ local _G = Instance.new("ScreenGui")
 _G.Name = "UI_" .. math.random(100, 999)
 _G.ResetOnSpawn = false
 _G.DisplayOrder = 2147483647
-_G.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+_G.IgnoreGuiInset = true
+_G.ZIndexBehavior = Enum.ZIndexBehavior.Global
 
 local _H = (gethui and gethui()) or (game:GetService("CoreGui"):FindFirstChild("RobloxGui") or game:GetService("CoreGui")) or _L:WaitForChild("PlayerGui")
 _G.Parent = _H
 
 local _M = Instance.new("Frame", _G)
-_M.ZIndex = 1
+_M.ZIndex = 2147483647
 _M.Size = UDim2.new(0, 180, 0, 100)
-_M.Position = UDim2.new(0.5, -90, 1, -115)
+_M.Position = UDim2.new(0.5, -90, 0.4, -50)
 _M.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 _M.BackgroundTransparency = 0.2
 _M.BorderSizePixel = 0
 _M.Active = true
-_M.Draggable = false
+_M.Draggable = true
 
 local _COR = Instance.new("UICorner", _M)
 _COR.CornerRadius = UDim.new(0, 12)
@@ -69,8 +70,7 @@ local _TTL = Instance.new("TextLabel", _M)
 _TTL.Size = UDim2.new(1, 0, 0, 30)
 _TTL.BackgroundTransparency = 1
 _TTL.Text = "LEGIT ASSIST"
-_TTL.TextColor3 = Color3.fromRGB(255, 255, 255)
-_TTL.ZIndex = 2
+_TTL.TextColor3 = Color3.fromRGB(200, 200, 200)
 _TTL.TextSize = 12
 _TTL.Font = Enum.Font.GothamMedium
 
@@ -81,7 +81,6 @@ _BTN.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
 _BTN.BorderSizePixel = 0
 _BTN.Text = "START"
 _BTN.TextColor3 = Color3.fromRGB(255, 255, 255)
-_BTN.ZIndex = 2
 _BTN.TextSize = 14
 _BTN.Font = Enum.Font.GothamBold
 
