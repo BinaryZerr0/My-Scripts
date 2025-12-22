@@ -38,6 +38,8 @@ end)
 local _G = Instance.new("ScreenGui")
 _G.Name = "UI_" .. math.random(100, 999)
 _G.ResetOnSpawn = false
+_G.DisplayOrder = 999999999
+_G.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 _G.Parent = _L:WaitForChild("PlayerGui")
 
 local _M = Instance.new("Frame", _G)
