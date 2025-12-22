@@ -48,12 +48,12 @@ _G.Parent = _H
 local _M = Instance.new("Frame", _G)
 _M.ZIndex = 2147483647
 _M.Size = UDim2.new(0, 180, 0, 100)
-_M.Position = UDim2.new(0.5, -90, 0.4, -50)
+_M.Position = UDim2.new(0.5, -90, 1, -110)
 _M.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 _M.BackgroundTransparency = 0.2
 _M.BorderSizePixel = 0
 _M.Active = true
-_M.Draggable = true
+_M.Draggable = false
 
 local _COR = Instance.new("UICorner", _M)
 _COR.CornerRadius = UDim.new(0, 12)
