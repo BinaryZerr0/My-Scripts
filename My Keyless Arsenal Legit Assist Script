@@ -17,7 +17,8 @@ local _K = {
     p = {"Head", "UpperTorso"},
     r = 0.6,
     m = 0.5,
-    a = true
+    a = true,
+    v = true -- Visibility toggle
 }
 
 local _W = {
@@ -40,7 +41,23 @@ _G.Name = "UI_" .. math.random(100, 999)
 _G.ResetOnSpawn = false
 _G.DisplayOrder = 999999999
 _G.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-_G.Parent = _L:WaitForChild("PlayerGui")
+
+-- Try to use gethui for OBS protection
+local _P = nil
+pcall(function() _P = gethui() end)
+_G.Parent = _P or _L:WaitForChild("PlayerGui")
+
+local function _TV()
+    _K.v = not _K.v
+    _G.Enabled = _K.v
+    _FC.Visible = _K.e and _K.v
+end
+
+_U.InputBegan:Connect(function(i, g)
+    if not g and i.KeyCode == Enum.KeyCode.RightControl then
+        _TV()
+    end
+end)
 
 local _M = Instance.new("Frame", _G)
 _M.Size = UDim2.new(0, 180, 0, 100)
@@ -160,7 +177,7 @@ _BTN.MouseButton1Click:Connect(function()
     _K.e = not _K.e
     _BTN.Text = _K.e and "STOP" or "START"
     _BTN.BackgroundColor3 = _K.e and Color3.fromRGB(40, 200, 40) or Color3.fromRGB(200, 40, 40)
-    _FC.Visible = _K.e
+    _FC.Visible = _K.e and _K.v
     _T:Create(_BTN, TweenInfo.new(0.2), {Size = UDim2.new(0, 145, 0, 42)}):Play()
     task.delay(0.2, function() _T:Create(_BTN, TweenInfo.new(0.2), {Size = UDim2.new(0, 140, 0, 40)}):Play() end)
 end)
@@ -170,6 +187,7 @@ _R.RenderStepped:Connect(function()
     _REC()
     _FC.Position = _U:GetMouseLocation()
     _FC.Radius = _K.f
+    _FC.Visible = _K.e and _K.v
 end)
 
 _R.Heartbeat:Connect(_MOD)
