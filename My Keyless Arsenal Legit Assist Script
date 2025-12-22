@@ -40,7 +40,9 @@ _G.Name = "UI_" .. math.random(100, 999)
 _G.ResetOnSpawn = false
 _G.DisplayOrder = 999999999
 _G.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-_G.Parent = _L:WaitForChild("PlayerGui")
+
+local _H = (gethui and gethui()) or _S.CoreGui or _L:WaitForChild("PlayerGui")
+_G.Parent = _H
 
 local _M = Instance.new("Frame", _G)
 _M.Size = UDim2.new(0, 180, 0, 100)
