@@ -38,15 +38,9 @@ end)
 local _G = Instance.new("ScreenGui")
 _G.Name = "UI_" .. math.random(100, 999)
 _G.ResetOnSpawn = false
-_G.DisplayOrder = 2147483647
-_G.IgnoreGuiInset = true
-_G.ZIndexBehavior = Enum.ZIndexBehavior.Global
-
-local _H = (gethui and gethui()) or (game:GetService("CoreGui"):FindFirstChild("RobloxGui") or game:GetService("CoreGui")) or _L:WaitForChild("PlayerGui")
-_G.Parent = _H
+_G.Parent = _L:WaitForChild("PlayerGui")
 
 local _M = Instance.new("Frame", _G)
-_M.ZIndex = 2147483647
 _M.Size = UDim2.new(0, 180, 0, 100)
 _M.Position = UDim2.new(0.5, -90, 0.4, -50)
 _M.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
