@@ -14,18 +14,7 @@ local _K = {
     f = 80,
     s = 0.08,
     o = 0.1,
-    p = {"Head", "UpperTorso"},
-    r = 0.6,
-    m = 0.5,
-    a = true
-}
-
-local _W = {
-    ["ABS Rifle"] = 1.5, ["AA12"] = 3, ["AK47"] = 2.5, ["AK74"] = 2,
-    ["AKM"] = 2.5, ["AR-PDW"] = 1, ["AUG"] = 1.5, ["AWP"] = 10,
-    ["Acid Spitter"] = 0, ["Arm Cannon"] = 0, ["Armament"] = 1,
-    ["BAR"] = 0.75, ["BH10"] = 1, ["Barrett"] = 10,
-    ["Baseball Launcher"] = 2.5, ["Blunderbuss"] = 5
+    p = {"Head", "UpperTorso"}
 }
 
 task.spawn(function()
@@ -48,7 +37,7 @@ _M.Position = UDim2.new(0.5, -90, 0.4, -50)
 _M.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 _M.BackgroundTransparency = 0.2
 _M.BorderSizePixel = 0
-_M.ZIndex = 10 -- Base layer
+_M.ZIndex = 10
 _M.Active = true
 _M.Draggable = true
 
@@ -66,10 +55,10 @@ _GRA.Rotation = 45
 local _TTL = Instance.new("TextLabel", _M)
 _TTL.Size = UDim2.new(1, 0, 0, 30)
 _TTL.BackgroundTransparency = 1
-_TTL.ZIndex = 11 -- Above frame
-_TTL.Text = "LEGIT ASSIST"
+_TTL.ZIndex = 11
+_TTL.Text = "LEGIT ASSIST (NO RECOIL)"
 _TTL.TextColor3 = Color3.fromRGB(200, 200, 200)
-_TTL.TextSize = 12
+_TTL.TextSize = 10
 _TTL.Font = Enum.Font.GothamMedium
 
 local _BTN = Instance.new("TextButton", _M)
@@ -77,7 +66,7 @@ _BTN.Size = UDim2.new(0, 140, 0, 40)
 _BTN.Position = UDim2.new(0.5, -70, 0.5, -5)
 _BTN.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
 _BTN.BorderSizePixel = 0
-_BTN.ZIndex = 11 -- Above frame
+_BTN.ZIndex = 11
 _BTN.Text = "START"
 _BTN.TextColor3 = Color3.fromRGB(255, 255, 255)
 _BTN.TextSize = 14
@@ -133,29 +122,6 @@ local function _AIM()
     end
 end
 
-local function _REC()
-    if not _K.e or not _K.a then return end
-    if _U:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
-        local w = _L.Character and _L.Character:FindFirstChildOfClass("Tool")
-        local rv = _W[w and w.Name or ""] or 1.0
-        if rv > 0 then
-            _C.CFrame = _C.CFrame * CFrame.Angles(-math.rad((rv * _K.m) / 10), 0, 0)
-        end
-    end
-end
-
-local function _MOD()
-    if not _K.e or not _L.Character then return end
-    local w = _L.Character:FindFirstChildOfClass("Tool")
-    if w and w:FindFirstChild("WeaponConfig") then
-        local s, c = pcall(require, w.WeaponConfig)
-        if s and c then
-            if c.Recoil then c.Recoil = c.Recoil * (1 - _K.r) end
-            if c.MaxSpread then c.MaxSpread = c.MaxSpread * 0.7 end
-        end
-    end
-end
-
 _BTN.MouseButton1Click:Connect(function()
     _K.e = not _K.e
     _BTN.Text = _K.e and "STOP" or "START"
@@ -167,11 +133,8 @@ end)
 
 _R.RenderStepped:Connect(function()
     _AIM()
-    _REC()
     _FC.Position = _U:GetMouseLocation()
     _FC.Radius = _K.f
 end)
 
-_R.Heartbeat:Connect(_MOD)
-
-_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Ready!", Duration = 3})
+_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Aimbot Ready!", Duration = 3})
