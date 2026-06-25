@@ -12,8 +12,8 @@ local _N2 = "\80\108\101\97\115\101\32\117\115\101\32\116\104\101\32\111\102\102
 local _K = {
     e = false,
     f = 80,
-    s = 0.08,
-    o = 0.1,
+    s = 0.05,
+    o = 0,
     p = {"Head", "UpperTorso"}
 }
 
@@ -112,17 +112,36 @@ local function _TAR()
     return bt
 end
 
+local _CO = Vector3.new(0, 0, 0)
+local _TO = Vector3.new(0, 0, 0)
+local _LU = 0
+
 local function _AIM()
     if not _K.e then return end
     local td = _TAR()
     if td then
-        local ap = td.pt.Position
-        local targetCF = CFrame.new(_C.CFrame.Position, ap)
-        local _, targetYaw, _ = targetCF:ToEulerAnglesYXZ()
-        local currentPitch, _, currentRoll = _C.CFrame:ToEulerAnglesYXZ()
-        local finalTargetCF = CFrame.new(_C.CFrame.Position) * CFrame.fromEulerAnglesYXZ(currentPitch, targetYaw, currentRoll)
-        local rs = _K.s + (math.random(-5, 5) / 100)
-        _C.CFrame = _C.CFrame:Lerp(finalTargetCF, rs)
+        local now = os.clock()
+        if now - _LU > 0.15 then
+            _LU = now
+            _TO = Vector3.new(
+                math.random(-15, 15) / 100,
+                math.random(-15, 15) / 100,
+                math.random(-15, 15) / 100
+            )
+        end
+        _CO = _CO:Lerp(_TO, 0.1)
+        
+        local ap = td.pt.Position + _CO
+        local camCF = _C.CFrame
+        local targetLook = (ap - camCF.Position).Unit
+        local currentLook = camCF.LookVector
+        local angle = math.acos(math.clamp(currentLook:Dot(targetLook), -1, 1))
+        
+        local speed_modifier = math.clamp(angle * 1.5, 0.4, 1.2)
+        local human_variance = (math.random(-10, 10) / 1000)
+        local final_speed = math.clamp(_K.s * speed_modifier + human_variance, 0.01, 0.15)
+        
+        _C.CFrame = camCF:Lerp(CFrame.new(camCF.Position, ap), final_speed)
     end
 end
 
@@ -141,4 +160,4 @@ _R.RenderStepped:Connect(function()
     _FC.Radius = _K.f
 end)
 
-_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Horizontal Assist Ready!", Duration = 3})
+_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Legit Assist Ready!", Duration = 3})
