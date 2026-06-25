@@ -5,7 +5,7 @@ local _U = _S.UserInputService
 local _R = _S.RunService
 local _T = _S.TweenService
 
-local _V0 = "https://raw.githubusercontent.com/BinaryZerr0/My-Scripts/main/My%20Keyless%20Arsenal%20Legit%20Assist%20Script.lua"
+local _V0 = "https://raw.githubusercontent.com/BinaryZerr0/My-Scripts/refs/heads/main/My%20Keyless%20Arsenal%20Legit%20Assist%20Script"
 local _N1 = "\115\107\105\100\101\100\118\101\114\115\105\111\110\32\111\114\105\103\110\105\97\108\32\98\121\32\66\105\110\97\114\121\90\101\114\111\33"
 local _N2 = "\80\108\101\97\115\101\32\117\115\101\32\116\104\101\32\111\102\102\105\99\105\97\108\32\115\111\117\114\99\101\46"
 
