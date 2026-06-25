@@ -56,7 +56,7 @@ local _TTL = Instance.new("TextLabel", _M)
 _TTL.Size = UDim2.new(1, 0, 0, 30)
 _TTL.BackgroundTransparency = 1
 _TTL.ZIndex = 11
-_TTL.Text = "LEGIT ASSIST (NO RECOIL)"
+_TTL.Text = "LEGIT ASSIST"
 _TTL.TextColor3 = Color3.fromRGB(200, 200, 200)
 _TTL.TextSize = 10
 _TTL.Font = Enum.Font.GothamMedium
@@ -116,9 +116,13 @@ local function _AIM()
     if not _K.e then return end
     local td = _TAR()
     if td then
-        local ap = td.pt.Position + Vector3.new(0, _K.o, 0)
+        local ap = td.pt.Position
+        local targetCF = CFrame.new(_C.CFrame.Position, ap)
+        local _, targetYaw, _ = targetCF:ToEulerAnglesYXZ()
+        local currentPitch, _, currentRoll = _C.CFrame:ToEulerAnglesYXZ()
+        local finalTargetCF = CFrame.new(_C.CFrame.Position) * CFrame.fromEulerAnglesYXZ(currentPitch, targetYaw, currentRoll)
         local rs = _K.s + (math.random(-5, 5) / 100)
-        _C.CFrame = _C.CFrame:Lerp(CFrame.new(_C.CFrame.Position, ap), rs)
+        _C.CFrame = _C.CFrame:Lerp(finalTargetCF, rs)
     end
 end
 
@@ -137,4 +141,4 @@ _R.RenderStepped:Connect(function()
     _FC.Radius = _K.f
 end)
 
-_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Aimbot Ready!", Duration = 3})
+_S.StarterGui:SetCore("SendNotification", {Title = "Script Loaded", Text = "Horizontal Assist Ready!", Duration = 3})
